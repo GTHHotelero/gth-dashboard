@@ -1,0 +1,38 @@
+name: GTH Dashboard · Deploy diario
+
+on:
+  schedule:
+    - cron: '0 11 * * *'  # 08:00 AM Argentina (UTC-3)
+  workflow_dispatch:       # También manual desde GitHub Actions
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependencias
+        run: pip install google-auth google-auth-httplib2 google-api-python-client
+
+      - name: Generar dashboard
+        env:
+          GDRIVE_SERVICE_ACCOUNT_JSON: ${{ secrets.GDRIVE_SERVICE_ACCOUNT_JSON }}
+          LOGO_B64: ${{ secrets.LOGO_B64 }}
+        run: python generate_dashboard.py
+
+      - name: Commit y push
+        run: |
+          git config user.name "GTH Bot"
+          git config user.email "bot@gth.com"
+          git add index.html db.json
+          git diff --cached --quiet || git commit -m "Dashboard GTH · $(date +'%d/%m/%Y') · automático"
+          git push
