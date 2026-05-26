@@ -1,55 +1,47 @@
 <!DOCTYPE html>
-<html lang="es"> 
+<html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GTH · Dashboard Hotelero</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --gold:#9E8E5A;--gold-l:#BCA96A;--grey:#787878;--grey-l:#A8A8A8;--grey-bg:#F4F2EE;
+  --gold:#9E8E5A;--grey:#787878;--grey-bg:#F4F2EE;
   --plr:#378ADD;--hjc:#1D9E75;--soho:#D85A30;
   --red:#DC2626;--green:#16A34A;--amber:#D97706;
   --bg:#FAFAF8;--card:#FFFFFF;--border:#E8E4DC;
   --text:#1C1C1A;--text2:#4A4A47;--text3:#787878;
 }
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px}
 
-.topbar{
-  background:#fff;border-bottom:3px solid var(--gold);
-  padding:0 24px;display:flex;align-items:center;
-  justify-content:space-between;height:60px;
-  position:sticky;top:0;z-index:100;
-  box-shadow:0 2px 8px rgba(0,0,0,.06)
-}
-.topbar-left{display:flex;align-items:center;gap:14px}
-.logo-area{display:flex;align-items:center;gap:10px}
-.logo-img{height:36px;width:auto}
-.brand-title{font-size:15px;font-weight:700;color:var(--text);letter-spacing:.3px}
-.brand-sub{font-size:11px;color:var(--grey);letter-spacing:.5px}
+/* TOPBAR */
+.topbar{background:#fff;border-bottom:3px solid var(--gold);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:64px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.logo-img{height:40px;width:auto}
 .topbar-right{display:flex;align-items:center;gap:12px}
 .badge-k007{background:var(--gold);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;letter-spacing:1px;border-radius:2px}
 .badge-date{font-family:'DM Mono',monospace;font-size:11px;color:var(--grey);background:var(--grey-bg);padding:4px 10px;border-radius:2px}
 
+/* DATE BAR */
 .date-bar{background:#fff;border-bottom:1px solid var(--border);padding:8px 24px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .date-bar-label{font-size:11px;color:var(--grey);font-weight:600;letter-spacing:.5px;margin-right:4px}
 .date-btn{font-family:'DM Mono',monospace;font-size:11px;padding:4px 12px;border:1px solid var(--border);background:#fff;color:var(--text2);cursor:pointer;border-radius:3px;transition:all .15s;position:relative}
 .date-btn:hover{border-color:var(--gold);color:var(--gold)}
 .date-btn.active{background:var(--gold);color:#fff;border-color:var(--gold);font-weight:600}
-.date-btn.latest-badge::after{content:'HOY';position:absolute;top:-8px;right:-4px;background:var(--green);color:#fff;font-size:8px;padding:1px 4px;border-radius:2px;font-weight:700;letter-spacing:.5px}
+.date-btn.latest::after{content:'HOY';position:absolute;top:-8px;right:-4px;background:var(--green);color:#fff;font-size:8px;padding:1px 4px;border-radius:2px;font-weight:700}
 
+/* ALERTS */
 .alerts-zone{padding:0 24px;margin-top:16px}
 .alert{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-radius:4px;margin-bottom:8px;border-left:4px solid;font-size:13px}
 .alert-critico{background:#FEF2F2;border-color:var(--red);color:#7F1D1D}
 .alert-alerta{background:#FFFBEB;border-color:var(--amber);color:#78350F}
 .alert-ok{background:#F0FDF4;border-color:var(--green);color:#14532D}
-.alert-icon{font-size:16px;line-height:1.3;flex-shrink:0}
 
-.tabs-nav{display:flex;gap:0;padding:0 24px;margin-top:16px;border-bottom:2px solid var(--border)}
-.tab-btn{padding:10px 20px;font-size:13px;font-weight:600;color:var(--text3);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;letter-spacing:.2px}
+/* TABS */
+.tabs-nav{display:flex;padding:0 24px;margin-top:16px;border-bottom:2px solid var(--border)}
+.tab-btn{padding:10px 20px;font-size:13px;font-weight:600;color:var(--text3);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s}
 .tab-btn:hover{color:var(--gold)}
 .tab-btn.active{color:var(--gold);border-bottom-color:var(--gold)}
 .tab-panel{display:none;padding:20px 24px 40px}
@@ -57,82 +49,74 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 
 .section-label{font-size:10px;font-weight:700;color:var(--grey);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border)}
 
-.kpi-grid{display:grid;gap:12px}
-.kpi-grid-2{grid-template-columns:1fr 1fr}
-.kpi-grid-3{grid-template-columns:repeat(3,1fr)}
-.kpi-grid-4{grid-template-columns:repeat(4,1fr)}
+/* ═══ GRILLA PRINCIPAL 2 COL x 3 FILAS ═══ */
+.bloque{background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:20px;overflow:hidden}
+.bloque-header{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.bloque-nombre{font-size:15px;font-weight:700}
+.bloque-meta{font-size:11px;color:var(--grey);font-family:'DM Mono',monospace}
 
-.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:14px 16px;border-top:3px solid var(--gold);position:relative;overflow:hidden}
-.kpi-card.hotel-plr{border-top-color:var(--plr)}
-.kpi-card.hotel-hjc{border-top-color:var(--hjc)}
-.kpi-card.hotel-soho{border-top-color:var(--soho)}
-.kpi-label{font-size:10px;font-weight:700;color:var(--grey);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
-.kpi-value{font-family:'DM Mono',monospace;font-size:22px;font-weight:500;color:var(--text);letter-spacing:-0.5px;margin-bottom:6px}
-.kpi-value.big{font-size:28px}
-.kpi-chips{display:flex;flex-wrap:wrap;gap:4px}
-.chip{font-family:'DM Mono',monospace;font-size:10px;padding:2px 7px;border-radius:3px;font-weight:500;display:inline-flex;align-items:center;gap:3px}
+/* Cabecera de columnas */
+.cols-header{display:grid;grid-template-columns:1fr 1fr;gap:0;border-bottom:2px solid var(--border)}
+.col-head{padding:8px 18px;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;text-align:center}
+.col-head.dia{color:var(--plr);border-right:1px solid var(--border)}
+.col-head.mes{color:var(--gold)}
+
+/* Filas de KPIs */
+.kpi-row{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border)}
+.kpi-row:last-child{border-bottom:none}
+.kpi-cell{padding:16px 18px;text-align:center}
+.kpi-cell.dia{border-right:1px solid var(--border)}
+.kpi-row-label{font-size:9px;font-weight:700;color:var(--grey);letter-spacing:1.2px;text-transform:uppercase;text-align:center;padding:6px 18px;background:var(--grey-bg);border-bottom:1px solid var(--border);grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:8px}
+.kpi-val{font-family:'DM Mono',monospace;font-size:22px;font-weight:500;color:var(--text);margin-bottom:4px}
+.kpi-val.big{font-size:26px}
+.chips{display:flex;flex-wrap:wrap;gap:3px;justify-content:center}
+.chip{font-family:'DM Mono',monospace;font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500}
 .chip-ma-up{background:#DCFCE7;color:#15803D}
 .chip-ma-dn{background:#FEE2E2;color:#B91C1C}
 .chip-aa-up{background:#DBEAFE;color:#1D4ED8}
 .chip-aa-dn{background:#FEE2E2;color:#B91C1C}
 .chip-grey{background:#F3F4F6;color:#6B7280}
-.kpi-bar-bg{height:4px;background:#F0EDE6;border-radius:2px;margin-top:10px;overflow:hidden}
-.kpi-bar-fill{height:100%;border-radius:2px;background:var(--gold);transition:width .6s ease}
 
-.hotel-block{background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:20px;overflow:hidden}
-.hotel-block-header{padding:12px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
-.hotel-block-name{font-size:15px;font-weight:700}
-.hotel-block-meta{font-size:11px;color:var(--grey);font-family:'DM Mono',monospace}
-.hotel-block-body{padding:16px 18px}
-.col-title{font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--border)}
-.rev-mini-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px;border-top:1px solid var(--border);padding-top:12px}
-.rev-mini{background:var(--grey-bg);border-radius:4px;padding:10px 12px}
-.rev-mini-label{font-size:9px;color:var(--grey);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
-.rev-mini-value{font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:var(--text)}
+/* Revenue mini */
+.rev-row{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--border)}
+.rev-cell{padding:10px 12px;text-align:center;border-right:1px solid var(--border)}
+.rev-cell:last-child{border-right:none}
+.rev-label{font-size:9px;color:var(--grey);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.rev-val{font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--text)}
 
-.seg-table-wrap{overflow-x:auto;margin-bottom:20px}
+/* SEGMENTOS */
 .seg-table{width:100%;border-collapse:collapse;font-size:12px}
-.seg-table th{padding:8px 12px;text-align:right;font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--grey);background:var(--grey-bg);border-bottom:2px solid var(--border);white-space:nowrap}
+.seg-table th{padding:8px 12px;text-align:right;font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--grey);background:var(--grey-bg);border-bottom:2px solid var(--border)}
 .seg-table th:first-child{text-align:left}
 .seg-table td{padding:7px 12px;text-align:right;border-bottom:1px solid var(--border)}
-.seg-table td:first-child{text-align:left;font-weight:600;color:var(--text2)}
-.seg-table tr:hover td{background:#FAFAF6}
-.seg-table .hotel-header td{background:var(--grey-bg);font-size:11px;font-weight:700;color:var(--text);text-align:left;padding:9px 12px;border-top:2px solid var(--border)}
+.seg-table td:first-child{text-align:left;font-weight:600}
+.seg-table .hotel-header td{background:var(--grey-bg);font-weight:700;text-align:left;padding:9px 12px;border-top:2px solid var(--border)}
 .var-up{color:var(--green);font-weight:600}
 .var-dn{color:var(--red);font-weight:600}
-.var-na{color:var(--grey)}
 
+/* CHARTS */
 .chart-wrap{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:18px;margin-bottom:16px}
 .chart-title{font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.5px;margin-bottom:14px;text-transform:uppercase}
 .charts-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.resumen-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
 
 footer{background:#fff;border-top:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--grey)}
-.footer-brand{font-weight:700;color:var(--gold);letter-spacing:.5px}
+.footer-brand{font-weight:700;color:var(--gold)}
 
 @media(max-width:768px){
-  .kpi-grid-4,.resumen-grid{grid-template-columns:1fr 1fr}
-  .kpi-grid-3{grid-template-columns:1fr 1fr}
-  .rev-mini-grid{grid-template-columns:1fr 1fr}
   .charts-grid-2{grid-template-columns:1fr}
+  .rev-row{grid-template-columns:1fr 1fr}
   .tabs-nav{overflow-x:auto}
-  .tab-btn{white-space:nowrap;padding:10px 14px;font-size:12px}
-  .topbar,.tab-panel,.date-bar{padding-left:12px;padding-right:12px}
+  .tab-btn{white-space:nowrap;font-size:12px;padding:10px 14px}
+  .topbar,.tab-panel,.date-bar,.alerts-zone{padding-left:12px;padding-right:12px}
+  .kpi-val{font-size:18px}
+  .kpi-val.big{font-size:22px}
 }
 </style>
 </head>
 <body>
 
 <div class="topbar">
-  <div class="topbar-left">
-    <div class="logo-area">
-      <img src="data:image/jpeg;base64,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" class="logo-img" alt="GTH" onerror="this.style.display='none'">
-      <div>
-        <div class="brand-title">GTH · Dashboard Hotelero</div>
-        <div class="brand-sub">Gestión y Talentos Hoteleros</div>
-      </div>
-    </div>
-  </div>
+  <img src="data:image/jpeg;base64,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" class="logo-img" alt="GTH">
   <div class="topbar-right">
     <span class="badge-k007">K007</span>
     <span class="badge-date" id="badge-fecha">25/05/2026</span>
@@ -147,433 +131,360 @@ footer{background:#fff;border-top:1px solid var(--border);padding:12px 24px;disp
 <div class="alerts-zone" id="alerts-zone"></div>
 
 <div class="tabs-nav">
-  <button class="tab-btn active" onclick="showTab('resumen',event)">📊 Resumen</button>
-  <button class="tab-btn" onclick="showTab('hotel',event)">🏨 Por Hotel</button>
-  <button class="tab-btn" onclick="showTab('segmentos',event)">📋 Segmentos</button>
-  <button class="tab-btn" onclick="showTab('graficos',event)">📈 Gráficos</button>
+  <button class="tab-btn active" onclick="showTab('resumen',event)">&#x1F4CA; Resumen Cadena</button>
+  <button class="tab-btn" onclick="showTab('hotel',event)">&#x1F3E8; Por Hotel</button>
+  <button class="tab-btn" onclick="showTab('segmentos',event)">&#x1F4CB; Segmentos</button>
+  <button class="tab-btn" onclick="showTab('graficos',event)">&#x1F4C8; Gr&aacute;ficos</button>
 </div>
 
+<!-- RESUMEN CADENA -->
 <div class="tab-panel active" id="tab-resumen">
-  <div class="section-label">Cadena GTH — Consolidado mes acumulado</div>
-  <div class="resumen-grid" id="resumen-kpis"></div>
-  <div class="section-label" style="margin-top:8px">Ocupación del día por hotel</div>
-  <div class="kpi-grid kpi-grid-3" id="resumen-hoteles"></div>
+  <div class="section-label">GTH &mdash; Consolidado 3 Hoteles</div>
+  <div id="cadena-bloque"></div>
 </div>
 
+<!-- POR HOTEL -->
 <div class="tab-panel" id="tab-hotel">
-  <div id="hotel-blocks"></div>
+  <div id="hotel-bloques"></div>
 </div>
 
+<!-- SEGMENTOS -->
 <div class="tab-panel" id="tab-segmentos">
-  <div class="seg-table-wrap">
+  <div style="overflow-x:auto;margin-bottom:20px">
     <table class="seg-table">
-      <thead>
-        <tr>
-          <th style="text-align:left">Segmento</th>
-          <th>Mes actual</th>
-          <th>Mes ant.</th>
-          <th>Var %</th>
-          <th>Año ant.</th>
-          <th>Var AA %</th>
-        </tr>
-      </thead>
+      <thead><tr>
+        <th style="text-align:left">Segmento</th>
+        <th>Mes actual</th><th>Mes ant.</th><th>Var %</th><th>A&ntilde;o ant.</th><th>Var AA %</th>
+      </tr></thead>
       <tbody id="seg-tbody"></tbody>
     </table>
   </div>
   <div class="chart-wrap">
-    <div class="chart-title">Segmentos — Comparativo por hotel (Mes actual)</div>
-    <canvas id="chartSegmentos" height="110"></canvas>
+    <div class="chart-title">Segmentos por hotel &mdash; Mes actual</div>
+    <canvas id="chartSeg" height="110"></canvas>
   </div>
 </div>
 
+<!-- GRÁFICOS -->
 <div class="tab-panel" id="tab-graficos">
   <div class="charts-grid-2">
-    <div class="chart-wrap">
-      <div class="chart-title">Ocupación — Día / Mes / Mes Ant. / AA</div>
-      <canvas id="chartOcupacion" height="160"></canvas>
-    </div>
-    <div class="chart-wrap">
-      <div class="chart-title">ADR — Mes actual vs Mes anterior (en miles $)</div>
-      <canvas id="chartADR" height="160"></canvas>
-    </div>
-    <div class="chart-wrap">
-      <div class="chart-title">RevPAR — Mes actual vs Mes anterior (en miles $)</div>
-      <canvas id="chartRevpar" height="160"></canvas>
-    </div>
-    <div class="chart-wrap">
-      <div class="chart-title">Revenue Total — Rooms / A&B / Extras (en millones $)</div>
-      <canvas id="chartRevenue" height="160"></canvas>
-    </div>
+    <div class="chart-wrap"><div class="chart-title">Ocupaci&oacute;n &mdash; D&iacute;a / Mes / Mes Ant.</div><canvas id="chartOc" height="160"></canvas></div>
+    <div class="chart-wrap"><div class="chart-title">ADR &mdash; Mes actual vs Mes anterior (miles $)</div><canvas id="chartADR" height="160"></canvas></div>
+    <div class="chart-wrap"><div class="chart-title">RevPAR &mdash; Mes actual vs Mes anterior (miles $)</div><canvas id="chartRP" height="160"></canvas></div>
+    <div class="chart-wrap"><div class="chart-title">Revenue &mdash; Rooms / A&amp;B / Extras (millones $)</div><canvas id="chartRev" height="160"></canvas></div>
   </div>
 </div>
 
 <footer>
-  <span class="footer-brand">GTH · Gestión y Talentos Hoteleros</span>
-  <span id="footer-info">Manager Report K007 · 25/05/2026 · informedeventas.netlify.app</span>
+  <span class="footer-brand">GTH &middot; Gesti&oacute;n y Talentos Hoteleros</span>
+  <span id="footer-info">Manager Report K007 &middot; 25/05/2026 &middot; informedeventas.netlify.app</span>
 </footer>
 
 <script>
-// ══════════════════════════════════════════════════════
-// BASE DE DATOS — extraída de Manager Reports K007
-// Fuente: Drive · GTH Dashboard Hotelero
-// ══════════════════════════════════════════════════════
 const DB = {
-  ultima_fecha: "2026-05-25",
-  fechas: ["2026-04-30","2026-05-25"],
-  datos: {
-    "2026-05-25": {
-      "HJ Plaza La Ribera": {
-        hotel:"HJ Plaza La Ribera", color:"#378ADD", hab:104, manager:"Maria Emilia Pourcel",
-        ocup_dia:33.33, ocup_dia_aa:36.27,
-        llegadas_dia:22, salidas_dia:42,
-        adr_dia:122385, adr_dia_aa:77983,
-        revpar_dia:40795, revpar_dia_aa:28288,
-        rev_hotel_dia:12444476,
-        hab_ocup_mes:854, hab_disp_mes:2483,
-        ocup_mes:32.39, ocup_mes_aa:42.04,
-        adr_mes:172225, adr_mes_aa:86992,
-        revpar_mes:55791, revpar_mes_aa:44172,
-        revpac_mes:406310,
-        rev_rooms_mes:142601957, rev_aabb_mes:172064471, rev_extras_mes:0,
-        rev_hotel_mes:336424975, rev_hotel_civa_mes:406694940,
-        // Comparativo MA (tomado del K007 30/04/2026)
-        ocup_mes_ma:36.58, adr_mes_ma:123715, revpar_mes_ma:45259, rev_hotel_mes_ma:236575354,
-        seg_individual:209, seg_corporativa:469, seg_otas:129, seg_grupos:173, seg_houseuse:26, seg_otras:0,
-        seg_ind_ma:449, seg_corp_ma:296, seg_otas_ma:355, seg_grupos_ma:79, seg_houseuse_ma:35, seg_otras_ma:0,
-        noches_grupo_mes:173, rev_grupo_mes:63761694,
+  ultima_fecha:"2026-05-25",
+  fechas:["2026-04-30","2026-05-25"],
+  datos:{
+    "2026-05-25":{
+      "HJ Plaza La Ribera":{
+        hotel:"HJ Plaza La Ribera",color:"#378ADD",hab:104,manager:"Maria Emilia Pourcel",
+        ocup_dia:33.33,ocup_dia_aa:36.27,llegadas_dia:22,salidas_dia:42,
+        adr_dia:122385,adr_dia_aa:77983,revpar_dia:40795,revpar_dia_aa:28288,
+        ocup_mes:32.39,ocup_mes_aa:42.04,adr_mes:172225,adr_mes_aa:86992,revpar_mes:55791,revpar_mes_aa:44172,
+        rev_rooms_mes:142601957,rev_aabb_mes:172064471,rev_extras_mes:0,
+        rev_hotel_mes:336424975,rev_hotel_civa_mes:406694940,
+        ocup_mes_ma:36.58,adr_mes_ma:123715,revpar_mes_ma:45259,rev_hotel_mes_ma:236575354,
+        seg_individual:209,seg_corporativa:469,seg_otas:129,seg_grupos:173,seg_houseuse:26,seg_otras:0,
+        seg_ind_ma:449,seg_corp_ma:296,seg_otas_ma:355,seg_grupos_ma:79,seg_houseuse_ma:35,seg_otras_ma:0,
       },
-      "Howard Johnson Cariló": {
-        hotel:"Howard Johnson Cariló", color:"#1D9E75", hab:120, manager:"Noelia Gonzalez",
-        ocup_dia:7.69, ocup_dia_aa:0,
-        llegadas_dia:4, salidas_dia:20,
-        adr_dia:117488, adr_dia_aa:0,
-        revpar_dia:9038, revpar_dia_aa:0,
-        rev_hotel_dia:5226352,
-        hab_ocup_mes:516, hab_disp_mes:2896,
-        ocup_mes:15.85, ocup_mes_aa:12.21,
-        adr_mes:116735, adr_mes_aa:77445,
-        revpar_mes:18499, revpar_mes_aa:9456,
-        revpac_mes:454789,
-        rev_rooms_mes:54515384, rev_aabb_mes:134720229, rev_extras_mes:0,
-        rev_hotel_mes:212386233, rev_hotel_civa_mes:256987342,
-        ocup_mes_ma:36.52, adr_mes_ma:56095, revpar_mes_ma:20486, rev_hotel_mes_ma:103249404,
-        seg_individual:100, seg_corporativa:299, seg_otas:5, seg_grupos:263, seg_houseuse:49, seg_otras:0,
-        seg_ind_ma:47, seg_corp_ma:1210, seg_otas_ma:2, seg_grupos_ma:1185, seg_houseuse_ma:30, seg_otras_ma:0,
-        noches_grupo_mes:263, rev_grupo_mes:34949381,
+      "Howard Johnson Caril\u00f3":{
+        hotel:"Howard Johnson Caril\u00f3",color:"#1D9E75",hab:120,manager:"Noelia Gonzalez",
+        ocup_dia:7.69,ocup_dia_aa:0,llegadas_dia:4,salidas_dia:20,
+        adr_dia:117488,adr_dia_aa:0,revpar_dia:9038,revpar_dia_aa:0,
+        ocup_mes:15.85,ocup_mes_aa:12.21,adr_mes:116735,adr_mes_aa:77445,revpar_mes:18499,revpar_mes_aa:9456,
+        rev_rooms_mes:54515384,rev_aabb_mes:134720229,rev_extras_mes:0,
+        rev_hotel_mes:212386233,rev_hotel_civa_mes:256987342,
+        ocup_mes_ma:36.52,adr_mes_ma:56095,revpar_mes_ma:20486,rev_hotel_mes_ma:103249404,
+        seg_individual:100,seg_corporativa:299,seg_otas:5,seg_grupos:263,seg_houseuse:49,seg_otras:0,
+        seg_ind_ma:47,seg_corp_ma:1210,seg_otas_ma:2,seg_grupos_ma:1185,seg_houseuse_ma:30,seg_otras_ma:0,
       },
-      "Soho Park": {
-        hotel:"Soho Park", color:"#D85A30", hab:43, manager:"Dalma Soria",
-        ocup_dia:32.56, ocup_dia_aa:0,
-        llegadas_dia:6, salidas_dia:7,
-        adr_dia:69466, adr_dia_aa:0,
-        revpar_dia:22617, revpar_dia_aa:0,
-        rev_hotel_dia:1003924,
-        hab_ocup_mes:752, hab_disp_mes:1073,
-        ocup_mes:69.58, ocup_mes_aa:0,
-        adr_mes:95800, adr_mes_aa:0,
-        revpar_mes:66659, revpar_mes_aa:0,
-        revpac_mes:115221,
-        rev_rooms_mes:71658303, rev_aabb_mes:12915715, rev_extras_mes:1610992,
-        rev_hotel_mes:86185010, rev_hotel_civa_mes:103477677,
-        ocup_mes_ma:54.11, adr_mes_ma:88442, revpar_mes_ma:47854, rev_hotel_mes_ma:67500898,
-        seg_individual:225, seg_corporativa:349, seg_otas:73, seg_grupos:163, seg_houseuse:4, seg_otras:90,
-        seg_ind_ma:266, seg_corp_ma:245, seg_otas_ma:124, seg_grupos_ma:21, seg_houseuse_ma:6, seg_otras_ma:61,
-        noches_grupo_mes:163, rev_grupo_mes:17359996,
+      "Soho Park":{
+        hotel:"Soho Park",color:"#D85A30",hab:43,manager:"Dalma Soria",
+        ocup_dia:32.56,ocup_dia_aa:0,llegadas_dia:6,salidas_dia:7,
+        adr_dia:69466,adr_dia_aa:0,revpar_dia:22617,revpar_dia_aa:0,
+        ocup_mes:69.58,ocup_mes_aa:0,adr_mes:95800,adr_mes_aa:0,revpar_mes:66659,revpar_mes_aa:0,
+        rev_rooms_mes:71658303,rev_aabb_mes:12915715,rev_extras_mes:1610992,
+        rev_hotel_mes:86185010,rev_hotel_civa_mes:103477677,
+        ocup_mes_ma:54.11,adr_mes_ma:88442,revpar_mes_ma:47854,rev_hotel_mes_ma:67500898,
+        seg_individual:225,seg_corporativa:349,seg_otas:73,seg_grupos:163,seg_houseuse:4,seg_otras:90,
+        seg_ind_ma:266,seg_corp_ma:245,seg_otas_ma:124,seg_grupos_ma:21,seg_houseuse_ma:6,seg_otras_ma:61,
       }
     },
-    "2026-04-30": {
-      "HJ Plaza La Ribera": {
-        hotel:"HJ Plaza La Ribera", color:"#378ADD", hab:104, manager:"Sofia Torres",
-        ocup_dia:11.54, ocup_dia_aa:55.77,
-        llegadas_dia:8, salidas_dia:19,
-        adr_dia:111909, adr_dia_aa:77671,
-        revpar_dia:12913, revpar_dia_aa:43317,
-        rev_hotel_dia:2572250,
-        hab_ocup_mes:1157, hab_disp_mes:2940,
-        ocup_mes:36.58, ocup_mes_aa:39.77,
-        adr_mes:123715, adr_mes_aa:90062,
-        revpar_mes:45259, revpar_mes_aa:35819,
-        revpac_mes:210851,
-        rev_rooms_mes:138808261, rev_aabb_mes:86153996, rev_extras_mes:0,
-        rev_hotel_mes:236575354, rev_hotel_civa_mes:321591063,
-        ocup_mes_ma:null, adr_mes_ma:null, revpar_mes_ma:null, rev_hotel_mes_ma:null,
-        seg_individual:449, seg_corporativa:296, seg_otas:355, seg_grupos:79, seg_houseuse:35, seg_otras:0,
+    "2026-04-30":{
+      "HJ Plaza La Ribera":{
+        hotel:"HJ Plaza La Ribera",color:"#378ADD",hab:104,manager:"Sofia Torres",
+        ocup_dia:11.54,ocup_dia_aa:55.77,llegadas_dia:8,salidas_dia:19,
+        adr_dia:111909,adr_dia_aa:77671,revpar_dia:12913,revpar_dia_aa:43317,
+        ocup_mes:36.58,ocup_mes_aa:39.77,adr_mes:123715,adr_mes_aa:90062,revpar_mes:45259,revpar_mes_aa:35819,
+        rev_rooms_mes:138808261,rev_aabb_mes:86153996,rev_extras_mes:0,
+        rev_hotel_mes:236575354,rev_hotel_civa_mes:321591063,
+        ocup_mes_ma:null,adr_mes_ma:null,revpar_mes_ma:null,rev_hotel_mes_ma:null,
+        seg_individual:449,seg_corporativa:296,seg_otas:355,seg_grupos:79,seg_houseuse:35,seg_otras:0,
         seg_ind_ma:null,seg_corp_ma:null,seg_otas_ma:null,seg_grupos_ma:null,seg_houseuse_ma:null,seg_otras_ma:null,
-        noches_grupo_mes:79, rev_grupo_mes:8407645,
       },
-      "Howard Johnson Cariló": {
-        hotel:"Howard Johnson Cariló", color:"#1D9E75", hab:120, manager:"Ramiro Saravia",
-        ocup_dia:5.93, ocup_dia_aa:11.21,
-        llegadas_dia:6, salidas_dia:7,
-        adr_dia:128571, adr_dia_aa:107578,
-        revpar_dia:7627, revpar_dia_aa:12056,
-        rev_hotel_dia:2796033,
-        hab_ocup_mes:1317, hab_disp_mes:3448,
-        ocup_mes:36.52, ocup_mes_aa:11.66,
-        adr_mes:56095, adr_mes_aa:99086,
-        revpar_mes:20486, revpar_mes_aa:11553,
-        revpac_mes:80225,
-        rev_rooms_mes:72194007, rev_aabb_mes:27348579, rev_extras_mes:0,
-        rev_hotel_mes:103249404, rev_hotel_civa_mes:124889778,
-        ocup_mes_ma:null, adr_mes_ma:null, revpar_mes_ma:null, rev_hotel_mes_ma:null,
-        seg_individual:47, seg_corporativa:1210, seg_otas:2, seg_grupos:1185, seg_houseuse:30, seg_otras:0,
+      "Howard Johnson Caril\u00f3":{
+        hotel:"Howard Johnson Caril\u00f3",color:"#1D9E75",hab:120,manager:"Ramiro Saravia",
+        ocup_dia:5.93,ocup_dia_aa:11.21,llegadas_dia:6,salidas_dia:7,
+        adr_dia:128571,adr_dia_aa:107578,revpar_dia:7627,revpar_dia_aa:12056,
+        ocup_mes:36.52,ocup_mes_aa:11.66,adr_mes:56095,adr_mes_aa:99086,revpar_mes:20486,revpar_mes_aa:11553,
+        rev_rooms_mes:72194007,rev_aabb_mes:27348579,rev_extras_mes:0,
+        rev_hotel_mes:103249404,rev_hotel_civa_mes:124889778,
+        ocup_mes_ma:null,adr_mes_ma:null,revpar_mes_ma:null,rev_hotel_mes_ma:null,
+        seg_individual:47,seg_corporativa:1210,seg_otas:2,seg_grupos:1185,seg_houseuse:30,seg_otras:0,
         seg_ind_ma:null,seg_corp_ma:null,seg_otas_ma:null,seg_grupos_ma:null,seg_houseuse_ma:null,seg_otras_ma:null,
-        noches_grupo_mes:1185, rev_grupo_mes:63098229,
       },
-      "Soho Park": {
-        hotel:"Soho Park", color:"#D85A30", hab:43, manager:"Esteban Gonzalez",
-        ocup_dia:44.19, ocup_dia_aa:0,
-        llegadas_dia:12, salidas_dia:28,
-        adr_dia:78900, adr_dia_aa:0,
-        revpar_dia:34863, revpar_dia_aa:0,
-        rev_hotel_dia:1657116,
-        hab_ocup_mes:704, hab_disp_mes:1283,
-        ocup_mes:54.11, ocup_mes_aa:0,
-        adr_mes:88442, adr_mes_aa:0,
-        revpar_mes:47854, revpar_mes_aa:0,
-        revpac_mes:96706,
-        rev_rooms_mes:61732189, rev_aabb_mes:4697761, rev_extras_mes:1070948,
-        rev_hotel_mes:67500898, rev_hotel_civa_mes:76738357,
-        ocup_mes_ma:null, adr_mes_ma:null, revpar_mes_ma:null, rev_hotel_mes_ma:null,
-        seg_individual:266, seg_corporativa:245, seg_otas:124, seg_grupos:21, seg_houseuse:6, seg_otras:61,
+      "Soho Park":{
+        hotel:"Soho Park",color:"#D85A30",hab:43,manager:"Esteban Gonzalez",
+        ocup_dia:44.19,ocup_dia_aa:0,llegadas_dia:12,salidas_dia:28,
+        adr_dia:78900,adr_dia_aa:0,revpar_dia:34863,revpar_dia_aa:0,
+        ocup_mes:54.11,ocup_mes_aa:0,adr_mes:88442,adr_mes_aa:0,revpar_mes:47854,revpar_mes_aa:0,
+        rev_rooms_mes:61732189,rev_aabb_mes:4697761,rev_extras_mes:1070948,
+        rev_hotel_mes:67500898,rev_hotel_civa_mes:76738357,
+        ocup_mes_ma:null,adr_mes_ma:null,revpar_mes_ma:null,rev_hotel_mes_ma:null,
+        seg_individual:266,seg_corporativa:245,seg_otas:124,seg_grupos:21,seg_houseuse:6,seg_otras:61,
         seg_ind_ma:null,seg_corp_ma:null,seg_otas_ma:null,seg_grupos_ma:null,seg_houseuse_ma:null,seg_otras_ma:null,
-        noches_grupo_mes:21, rev_grupo_mes:7105099,
       }
     }
   }
 };
 
-const HOTELES = [
-  {nombre:"HJ Plaza La Ribera",   color:"#378ADD", cls:"hotel-plr"},
-  {nombre:"Howard Johnson Cariló",color:"#1D9E75", cls:"hotel-hjc"},
-  {nombre:"Soho Park",            color:"#D85A30", cls:"hotel-soho"},
+const HOTELES=[
+  {nombre:"HJ Plaza La Ribera",color:"#378ADD"},
+  {nombre:"Howard Johnson Caril\u00f3",color:"#1D9E75"},
+  {nombre:"Soho Park",color:"#D85A30"},
 ];
 
-const $ = id => document.getElementById(id);
-const fmt_pct  = v => (v!=null && v!==0) ? v.toFixed(1)+"%" : "—";
-const fmt_p    = v => (v!=null && v!==0) ? "$ "+v.toLocaleString("es-AR") : "—";
-const fmt_mill = v => (v!=null && v>0) ? "$ "+(v/1e6).toFixed(1)+"M" : "—";
+const $=id=>document.getElementById(id);
+const fp=v=>v!=null&&v!==0?v.toFixed(1)+"%":"\u2014";
+const fm=v=>v!=null&&v>0?"$ "+(v/1e6).toFixed(1)+"M":"\u2014";
+const fp2=v=>v!=null&&v!==0?"$ "+Math.round(v).toLocaleString("es-AR"):"\u2014";
 
-function chip_ma(actual, ma, tipo){
-  if(ma==null || ma===0) return `<span class="chip chip-grey">MA: —</span>`;
-  const diff=actual-ma, pct=ma!==0?(diff/Math.abs(ma)*100).toFixed(1):null;
-  const arrow=diff>=0?"↑":"↓", cls=diff>=0?"chip-ma-up":"chip-ma-dn";
-  let txt = tipo==="pct" ? `MA ${arrow} ${Math.abs(diff).toFixed(1)}pp` : `MA ${arrow} ${pct?Math.abs(pct)+"%":""}`;
-  return `<span class="chip ${cls}">${txt}</span>`;
+function cMA(a,ma,tipo){
+  if(!ma)return'<span class="chip chip-grey">MA:\u2014</span>';
+  const d=a-ma,p=(d/Math.abs(ma)*100).toFixed(1),ar=d>=0?"\u2191":"\u2193",cl=d>=0?"chip-ma-up":"chip-ma-dn";
+  return`<span class="chip ${cl}">MA ${ar} ${tipo==="pct"?Math.abs(d).toFixed(1)+"pp":Math.abs(p)+"%"}</span>`;
 }
-function chip_aa(actual, aa){
-  if(aa==null || aa===0) return `<span class="chip chip-grey">AA: s/d</span>`;
-  const diff=actual-aa, pct=aa!==0?(diff/Math.abs(aa)*100).toFixed(1):null;
-  const arrow=diff>=0?"↑":"↓", cls=diff>=0?"chip-aa-up":"chip-aa-dn";
-  return `<span class="chip ${cls}">AA ${arrow} ${pct?Math.abs(pct)+"%":""}</span>`;
+function cAA(a,aa,tipo){
+  if(!aa)return'<span class="chip chip-grey">AA:s/d</span>';
+  const d=a-aa,p=(d/Math.abs(aa)*100).toFixed(1),ar=d>=0?"\u2191":"\u2193",cl=d>=0?"chip-aa-up":"chip-aa-dn";
+  return`<span class="chip ${cl}">AA ${ar} ${tipo==="pct"?Math.abs(d).toFixed(1)+"pp":Math.abs(p)+"%"}</span>`;
 }
-function var_str(a,b){
-  if(b==null||b===0) return `<span class="var-na">—</span>`;
+function varStr(a,b){
+  if(!b)return'<span style="color:var(--grey)">\u2014</span>';
   const v=((a-b)/Math.abs(b)*100).toFixed(1);
-  return `<span class="${v>=0?"var-up":"var-dn"}">${v>=0?"+":""}${v}%</span>`;
+  return`<span class="${v>=0?"var-up":"var-dn"}">${v>=0?"+":""}${v}%</span>`;
 }
-const getDato = (f,h) => DB.datos[f] && DB.datos[f][h];
+const gd=(f,h)=>DB.datos[f]&&DB.datos[f][h];
 
-// ALERTAS
+function bloqueHTML(titulo, meta, color, d, esCadena){
+  const borde = esCadena ? "var(--gold)" : color;
+  return `
+  <div class="bloque" style="border-top:3px solid ${borde}">
+    <div class="bloque-header">
+      <div>
+        <div class="bloque-nombre" style="color:${borde}">${titulo}</div>
+        ${meta?`<div class="bloque-meta">${meta}</div>`:""}
+      </div>
+      <span class="chip chip-grey" style="font-size:11px">Lleg: ${d.llegadas_dia||0} &middot; Sal: ${d.salidas_dia||0}</span>
+    </div>
+    <div class="cols-header">
+      <div class="col-head dia">&#9711; D&Iacute;A</div>
+      <div class="col-head mes">&#9711; MES ACUMULADO</div>
+    </div>
+    <!-- TARIFA -->
+    <div class="kpi-row-label" style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border)">
+      <div style="padding:6px 18px;font-size:9px;font-weight:700;color:var(--grey);letter-spacing:1.2px;text-transform:uppercase;background:var(--grey-bg);border-right:1px solid var(--border);text-align:center;grid-column:1/-1">TARIFA PROMEDIO (ADR)</div>
+    </div>
+    <div class="kpi-row">
+      <div class="kpi-cell dia">
+        <div class="kpi-val big">${fp2(d.adr_dia)}</div>
+        <div class="chips">${cAA(d.adr_dia,d.adr_dia_aa,"val")}</div>
+      </div>
+      <div class="kpi-cell">
+        <div class="kpi-val big">${fp2(d.adr_mes)}</div>
+        <div class="chips">${cMA(d.adr_mes,d.adr_mes_ma,"val")} ${cAA(d.adr_mes,d.adr_mes_aa,"val")}</div>
+      </div>
+    </div>
+    <!-- OCUPACIÓN -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border)">
+      <div style="padding:6px 18px;font-size:9px;font-weight:700;color:var(--grey);letter-spacing:1.2px;text-transform:uppercase;background:var(--grey-bg);border-right:1px solid var(--border);text-align:center;grid-column:1/-1">OCUPACI&Oacute;N</div>
+    </div>
+    <div class="kpi-row">
+      <div class="kpi-cell dia">
+        <div class="kpi-val big">${fp(d.ocup_dia)}</div>
+        <div class="chips">${cAA(d.ocup_dia,d.ocup_dia_aa,"pct")}</div>
+      </div>
+      <div class="kpi-cell">
+        <div class="kpi-val big">${fp(d.ocup_mes)}</div>
+        <div class="chips">${cMA(d.ocup_mes,d.ocup_mes_ma,"pct")} ${cAA(d.ocup_mes,d.ocup_mes_aa,"pct")}</div>
+      </div>
+    </div>
+    <!-- REVPAR -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border)">
+      <div style="padding:6px 18px;font-size:9px;font-weight:700;color:var(--grey);letter-spacing:1.2px;text-transform:uppercase;background:var(--grey-bg);border-right:1px solid var(--border);text-align:center;grid-column:1/-1">REVPAR</div>
+    </div>
+    <div class="kpi-row">
+      <div class="kpi-cell dia">
+        <div class="kpi-val big">${fp2(d.revpar_dia)}</div>
+        <div class="chips">${cAA(d.revpar_dia,d.revpar_dia_aa,"val")}</div>
+      </div>
+      <div class="kpi-cell">
+        <div class="kpi-val big">${fp2(d.revpar_mes)}</div>
+        <div class="chips">${cMA(d.revpar_mes,d.revpar_mes_ma,"val")} ${cAA(d.revpar_mes,d.revpar_mes_aa,"val")}</div>
+      </div>
+    </div>
+    <!-- REVENUE -->
+    <div class="rev-row">
+      <div class="rev-cell"><div class="rev-label">Revenue Mes</div><div class="rev-val">${fm(d.rev_hotel_mes)}</div></div>
+      <div class="rev-cell"><div class="rev-label">Rooms</div><div class="rev-val">${fm(d.rev_rooms_mes)}</div></div>
+      <div class="rev-cell"><div class="rev-label">A&amp;B</div><div class="rev-val">${fm(d.rev_aabb_mes)}</div></div>
+      <div class="rev-cell"><div class="rev-label">c/IVA</div><div class="rev-val">${fm(d.rev_hotel_civa_mes)}</div></div>
+    </div>
+  </div>`;
+}
+
 function renderAlertas(fecha){
-  $("alerts-zone").innerHTML = HOTELES.map(h=>{
-    const d=getDato(fecha,h.nombre); if(!d) return "";
-    const oc=d.ocup_dia;
-    if(oc<20) return `<div class="alert alert-critico"><span class="alert-icon">🔴</span><div><strong>CRÍTICO — ${h.nombre}:</strong> Ocupación del día ${fmt_pct(oc)} — por debajo del 20%</div></div>`;
-    if(oc<40) return `<div class="alert alert-alerta"><span class="alert-icon">⚠️</span><div><strong>ALERTA — ${h.nombre}:</strong> Ocupación del día ${fmt_pct(oc)} — por debajo del 40%</div></div>`;
-    return `<div class="alert alert-ok"><span class="alert-icon">✅</span><div><strong>${h.nombre}:</strong> Ocupación del día ${fmt_pct(oc)} — dentro de parámetros</div></div>`;
+  $("alerts-zone").innerHTML=HOTELES.map(h=>{
+    const d=gd(fecha,h.nombre);if(!d)return"";
+    const oc=d.ocup_dia||0;
+    if(oc<20)return`<div class="alert alert-critico"><span>\uD83D\uDD34</span><div><strong>CR\u00cdTICO \u2014 ${h.nombre}:</strong> Ocupaci\u00f3n del d\u00eda ${fp(oc)} \u2014 por debajo del 20%</div></div>`;
+    if(oc<40)return`<div class="alert alert-alerta"><span>\u26A0\uFE0F</span><div><strong>ALERTA \u2014 ${h.nombre}:</strong> Ocupaci\u00f3n del d\u00eda ${fp(oc)} \u2014 por debajo del 40%</div></div>`;
+    return`<div class="alert alert-ok"><span>\u2705</span><div><strong>${h.nombre}:</strong> Ocupaci\u00f3n del d\u00eda ${fp(oc)} \u2014 OK</div></div>`;
   }).join("");
 }
 
-// RESUMEN
-function renderResumen(fecha){
-  const ds=HOTELES.map(h=>getDato(fecha,h.nombre)).filter(Boolean);
-  if(!ds.length) return;
-  const rev=ds.reduce((s,d)=>s+d.rev_hotel_mes,0);
-  const rev_ma=ds.reduce((s,d)=>s+(d.rev_hotel_mes_ma||0),0);
-  const oc=ds.reduce((s,d)=>s+d.ocup_mes,0)/ds.length;
-  const oc_ma=ds.reduce((s,d)=>s+(d.ocup_mes_ma||0),0)/ds.length;
-  const adr=ds.reduce((s,d)=>s+d.adr_mes,0)/ds.length;
-  const adr_ma=ds.reduce((s,d)=>s+(d.adr_mes_ma||0),0)/ds.length;
-  const rp=ds.reduce((s,d)=>s+d.revpar_mes,0)/ds.length;
-  const rp_ma=ds.reduce((s,d)=>s+(d.revpar_mes_ma||0),0)/ds.length;
-
-  $("resumen-kpis").innerHTML = [
-    {label:"Revenue Cadena · Mes", val:fmt_mill(rev), ma:chip_ma(rev,rev_ma>0?rev_ma:null,"val"), bar:75},
-    {label:"Ocupación Prom · Mes",  val:fmt_pct(oc),  ma:chip_ma(oc,oc_ma>0?oc_ma:null,"pct"), bar:oc},
-    {label:"ADR Prom · Mes",       val:fmt_p(Math.round(adr)), ma:chip_ma(adr,adr_ma>0?adr_ma:null,"val"), bar:60},
-    {label:"RevPAR Prom · Mes",    val:fmt_p(Math.round(rp)),  ma:chip_ma(rp,rp_ma>0?rp_ma:null,"val"),  bar:45},
-  ].map(k=>`
-    <div class="kpi-card">
-      <div class="kpi-label">${k.label}</div>
-      <div class="kpi-value">${k.val}</div>
-      <div class="kpi-chips">${k.ma}</div>
-      <div class="kpi-bar-bg"><div class="kpi-bar-fill" style="width:${k.bar}%"></div></div>
-    </div>`).join("");
-
-  $("resumen-hoteles").innerHTML = HOTELES.map(h=>{
-    const d=getDato(fecha,h.nombre); if(!d) return "";
-    return `
-      <div class="kpi-card ${h.cls}">
-        <div class="kpi-label">${h.nombre}</div>
-        <div class="kpi-value big">${fmt_pct(d.ocup_dia)}</div>
-        <div style="font-size:11px;color:var(--grey);margin-bottom:6px">Ocupación del día</div>
-        <div class="kpi-chips">
-          ${chip_aa(d.ocup_dia, d.ocup_dia_aa)}
-          <span class="chip chip-grey">Mes: ${fmt_pct(d.ocup_mes)}</span>
-          <span class="chip chip-grey">Lleg: ${d.llegadas_dia} | Sal: ${d.salidas_dia}</span>
-        </div>
-        <div class="kpi-bar-bg"><div class="kpi-bar-fill" style="width:${d.ocup_dia}%;background:${h.color}"></div></div>
-      </div>`;
-  }).join("");
+function renderCadena(fecha){
+  const ds=HOTELES.map(h=>gd(fecha,h.nombre)).filter(Boolean);
+  if(!ds.length)return;
+  const cadena={
+    llegadas_dia:ds.reduce((s,d)=>s+(d.llegadas_dia||0),0),
+    salidas_dia:ds.reduce((s,d)=>s+(d.salidas_dia||0),0),
+    adr_dia:ds.reduce((s,d)=>s+(d.adr_dia||0),0)/ds.length,
+    adr_dia_aa:ds.reduce((s,d)=>s+(d.adr_dia_aa||0),0)/ds.length,
+    adr_mes:ds.reduce((s,d)=>s+(d.adr_mes||0),0)/ds.length,
+    adr_mes_ma:ds.reduce((s,d)=>s+(d.adr_mes_ma||0),0)/ds.length,
+    adr_mes_aa:ds.reduce((s,d)=>s+(d.adr_mes_aa||0),0)/ds.length,
+    ocup_dia:ds.reduce((s,d)=>s+(d.ocup_dia||0),0)/ds.length,
+    ocup_dia_aa:ds.reduce((s,d)=>s+(d.ocup_dia_aa||0),0)/ds.length,
+    ocup_mes:ds.reduce((s,d)=>s+(d.ocup_mes||0),0)/ds.length,
+    ocup_mes_ma:ds.reduce((s,d)=>s+(d.ocup_mes_ma||0),0)/ds.length,
+    ocup_mes_aa:ds.reduce((s,d)=>s+(d.ocup_mes_aa||0),0)/ds.length,
+    revpar_dia:ds.reduce((s,d)=>s+(d.revpar_dia||0),0)/ds.length,
+    revpar_dia_aa:ds.reduce((s,d)=>s+(d.revpar_dia_aa||0),0)/ds.length,
+    revpar_mes:ds.reduce((s,d)=>s+(d.revpar_mes||0),0)/ds.length,
+    revpar_mes_ma:ds.reduce((s,d)=>s+(d.revpar_mes_ma||0),0)/ds.length,
+    revpar_mes_aa:ds.reduce((s,d)=>s+(d.revpar_mes_aa||0),0)/ds.length,
+    rev_hotel_mes:ds.reduce((s,d)=>s+(d.rev_hotel_mes||0),0),
+    rev_rooms_mes:ds.reduce((s,d)=>s+(d.rev_rooms_mes||0),0),
+    rev_aabb_mes:ds.reduce((s,d)=>s+(d.rev_aabb_mes||0),0),
+    rev_hotel_civa_mes:ds.reduce((s,d)=>s+(d.rev_hotel_civa_mes||0),0),
+  };
+  $("cadena-bloque").innerHTML=bloqueHTML("Cadena GTH","3 Hoteles · Promedio ponderado","var(--gold)",cadena,true);
 }
 
-// POR HOTEL
 function renderHoteles(fecha){
-  $("hotel-blocks").innerHTML = HOTELES.map(h=>{
-    const d=getDato(fecha,h.nombre);
-    if(!d) return `<div class="hotel-block"><div class="hotel-block-header"><span class="hotel-block-name" style="color:${h.color}">${h.nombre}</span><span>Sin datos</span></div></div>`;
-    const kRow=(lbl,vd,vdaa,vm,vmma,vmaa,tipo)=>`
-      <div style="margin-bottom:14px">
-        <div class="kpi-label">${lbl}</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          <div>
-            <div class="kpi-value" style="font-size:20px">${tipo==="pct"?fmt_pct(vd):fmt_p(vd)}</div>
-            <div class="kpi-chips">${chip_aa(vd,vdaa)}</div>
-          </div>
-          <div>
-            <div class="kpi-value" style="font-size:20px">${tipo==="pct"?fmt_pct(vm):fmt_p(vm)}</div>
-            <div class="kpi-chips">${chip_ma(vm,vmma,tipo)} ${chip_aa(vm,vmaa)}</div>
-          </div>
-        </div>
-      </div>`;
-    return `
-      <div class="hotel-block">
-        <div class="hotel-block-header">
-          <div>
-            <div class="hotel-block-name" style="color:${h.color}">${h.nombre}</div>
-            <div class="hotel-block-meta">${d.hab} hab &middot; Manager: ${d.manager}</div>
-          </div>
-          <span class="chip chip-grey" style="font-size:11px">Llegadas: ${d.llegadas_dia} &middot; Salidas: ${d.salidas_dia}</span>
-        </div>
-        <div class="hotel-block-body">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)">
-            <div class="col-title" style="color:${h.color}">◉ DÍA</div>
-            <div class="col-title" style="color:var(--gold)">◉ MES ACUMULADO</div>
-          </div>
-          ${kRow("Ocupación",d.ocup_dia,d.ocup_dia_aa,d.ocup_mes,d.ocup_mes_ma,d.ocup_mes_aa,"pct")}
-          ${kRow("ADR",d.adr_dia,d.adr_dia_aa,d.adr_mes,d.adr_mes_ma,d.adr_mes_aa,"val")}
-          ${kRow("RevPAR",d.revpar_dia,d.revpar_dia_aa,d.revpar_mes,d.revpar_mes_ma,d.revpar_mes_aa,"val")}
-          <div class="rev-mini-grid">
-            <div class="rev-mini"><div class="rev-mini-label">Revenue Mes</div><div class="rev-mini-value">${fmt_mill(d.rev_hotel_mes)}</div></div>
-            <div class="rev-mini"><div class="rev-mini-label">Rooms Mes</div><div class="rev-mini-value">${fmt_mill(d.rev_rooms_mes)}</div></div>
-            <div class="rev-mini"><div class="rev-mini-label">A&amp;B Mes</div><div class="rev-mini-value">${fmt_mill(d.rev_aabb_mes)}</div></div>
-            <div class="rev-mini"><div class="rev-mini-label">c/IVA Mes</div><div class="rev-mini-value">${fmt_mill(d.rev_hotel_civa_mes)}</div></div>
-          </div>
-        </div>
-      </div>`;
+  $("hotel-bloques").innerHTML=HOTELES.map(h=>{
+    const d=gd(fecha,h.nombre);
+    if(!d)return`<div class="bloque"><div class="bloque-header"><span class="bloque-nombre" style="color:${h.color}">${h.nombre}</span></div><div style="padding:20px;color:var(--grey)">Sin datos</div></div>`;
+    return bloqueHTML(h.nombre,`${d.hab} hab \u00b7 Manager: ${d.manager}`,h.color,d,false);
   }).join("");
 }
 
-// SEGMENTOS
-const SEG_KEYS=["individual","corporativa","otas","grupos","houseuse","otras"];
+const SEG_KEYS=["seg_individual","seg_corporativa","seg_otas","seg_grupos","seg_houseuse","seg_otras"];
+const SEG_MA=["seg_ind_ma","seg_corp_ma","seg_otas_ma","seg_grupos_ma","seg_houseuse_ma","seg_otras_ma"];
 const SEG_NAMES=["Individual / Rack","Corporativa","OTAs","Grupos","House Use","Otras"];
-function renderSegmentos(fecha){
+
+function renderSeg(fecha){
   let rows="";
   HOTELES.forEach(h=>{
-    const d=getDato(fecha,h.nombre); if(!d) return;
-    rows+=`<tr class="hotel-header"><td colspan="6" style="color:${h.color}">● ${h.nombre}</td></tr>`;
+    const d=gd(fecha,h.nombre);if(!d)return;
+    rows+=`<tr class="hotel-header"><td colspan="6" style="color:${h.color}">&#9679; ${h.nombre}</td></tr>`;
     SEG_KEYS.forEach((k,i)=>{
-      const v=d["seg_"+k]||0, ma=d["seg_"+k+"_ma"];
-      rows+=`<tr><td>${SEG_NAMES[i]}</td><td>${v}</td><td>${ma!=null?ma:"—"}</td><td>${ma!=null?var_str(v,ma):"—"}</td><td>—</td><td>—</td></tr>`;
+      const v=d[k]||0,ma=d[SEG_MA[i]];
+      rows+=`<tr><td>${SEG_NAMES[i]}</td><td>${v}</td><td>${ma!=null?ma:"\u2014"}</td><td>${ma!=null?varStr(v,ma):"\u2014"}</td><td>\u2014</td><td>\u2014</td></tr>`;
     });
   });
   $("seg-tbody").innerHTML=rows;
-  const el=$("chartSegmentos");
-  if(el._chart) el._chart.destroy();
-  const hds=HOTELES.map(h=>({...h,d:getDato(fecha,h.nombre)}));
+  const el=$("chartSeg");
+  if(el._chart)el._chart.destroy();
   el._chart=new Chart(el,{type:"bar",data:{labels:SEG_NAMES,
-    datasets:hds.filter(h=>h.d).map(h=>({label:h.nombre.replace("Howard Johnson ","HJ "),backgroundColor:h.color+"CC",data:SEG_KEYS.map(k=>h.d["seg_"+k]||0)}))},
-    options:{responsive:true,plugins:{legend:{labels:{font:{family:"DM Sans"}}}},
-      scales:{x:{ticks:{font:{family:"DM Sans",size:11}}},y:{ticks:{font:{family:"DM Sans",size:11}}}}}});
+    datasets:HOTELES.filter(h=>gd(fecha,h.nombre)).map(h=>{
+      const d=gd(fecha,h.nombre);
+      return{label:h.nombre.replace("Howard Johnson ","HJ "),backgroundColor:h.color+"CC",data:SEG_KEYS.map(k=>d[k]||0)};
+    })},options:{responsive:true,plugins:{legend:{labels:{font:{family:"DM Sans"}}}},scales:{x:{ticks:{font:{family:"DM Sans",size:11}}},y:{ticks:{font:{family:"DM Sans",size:11}}}}}});
 }
 
-// GRÁFICOS
-let chartsInited=false, chartsObjects={};
+let CO={};
 function renderGraficos(fecha){
-  Object.values(chartsObjects).forEach(c=>c&&c.destroy()); chartsObjects={};
-  const hds=HOTELES.map(h=>({...h,d:getDato(fecha,h.nombre)}));
-  const labels=hds.map(h=>h.nombre.replace("Howard Johnson ","HJ "));
-  const opts={responsive:true,plugins:{legend:{labels:{font:{family:"DM Sans",size:11}}}},
-    scales:{x:{ticks:{font:{family:"DM Sans",size:11}}},y:{ticks:{font:{family:"DM Sans",size:11}}}}};
-
-  const oc=$("chartOcupacion");
-  if(oc) chartsObjects.oc=new Chart(oc,{type:"bar",data:{labels,datasets:[
-    {label:"Ocup. Día",backgroundColor:hds.map(h=>h.color+"EE"),data:hds.map(h=>h.d?h.d.ocup_dia:0)},
-    {label:"Ocup. Mes",backgroundColor:hds.map(h=>h.color+"77"),data:hds.map(h=>h.d?h.d.ocup_mes:0)},
-    {label:"Mes Ant.",type:"line",borderColor:"#9E8E5A",backgroundColor:"#9E8E5A22",pointBackgroundColor:"#9E8E5A",
-     data:hds.map(h=>h.d?(h.d.ocup_mes_ma||0):0),tension:.3},
-  ]},options:{...opts,scales:{...opts.scales,y:{...opts.scales.y,max:100}}}});
-
+  Object.values(CO).forEach(c=>c&&c.destroy());CO={};
+  const hds=HOTELES.map(h=>{...h,d:gd(fecha,h.nombre)});
+  const lb=hds.map(h=>h.nombre.replace("Howard Johnson ","HJ "));
+  const op={responsive:true,plugins:{legend:{labels:{font:{family:"DM Sans",size:11}}}},scales:{x:{ticks:{font:{family:"DM Sans",size:11}}},y:{ticks:{font:{family:"DM Sans",size:11}}}}};
+  const oc=$("chartOc");
+  if(oc)CO.oc=new Chart(oc,{type:"bar",data:{labels:lb,datasets:[
+    {label:"Ocup. D\u00eda",backgroundColor:hds.map(h=>h.color+"EE"),data:hds.map(h=>h.d?h.d.ocup_dia||0:0)},
+    {label:"Ocup. Mes",backgroundColor:hds.map(h=>h.color+"77"),data:hds.map(h=>h.d?h.d.ocup_mes||0:0)},
+    {label:"Mes Ant.",type:"line",borderColor:"#9E8E5A",pointBackgroundColor:"#9E8E5A",data:hds.map(h=>h.d?h.d.ocup_mes_ma||0:0),tension:.3},
+  ]},options:{...op,scales:{...op.scales,y:{...op.scales.y,max:100}}}});
   const adr=$("chartADR");
-  if(adr) chartsObjects.adr=new Chart(adr,{type:"bar",data:{labels,datasets:[
-    {label:"ADR Mes",backgroundColor:hds.map(h=>h.color+"EE"),data:hds.map(h=>h.d?(h.d.adr_mes/1000).toFixed(1):0)},
+  if(adr)CO.adr=new Chart(adr,{type:"bar",data:{labels:lb,datasets:[
+    {label:"ADR Mes",backgroundColor:hds.map(h=>h.color+"EE"),data:hds.map(h=>h.d?((h.d.adr_mes||0)/1000).toFixed(1):0)},
     {label:"ADR Mes Ant.",backgroundColor:hds.map(h=>h.color+"55"),data:hds.map(h=>h.d?((h.d.adr_mes_ma||0)/1000).toFixed(1):0)},
-    {label:"ADR AA",type:"line",borderColor:"#9E8E5A",pointBackgroundColor:"#9E8E5A",
-     data:hds.map(h=>h.d?((h.d.adr_mes_aa||0)/1000).toFixed(1):0),tension:.3},
-  ]},options:opts});
-
-  const rp=$("chartRevpar");
-  if(rp) chartsObjects.rp=new Chart(rp,{type:"bar",data:{labels,datasets:[
-    {label:"RevPAR Mes",backgroundColor:hds.map(h=>h.color+"EE"),data:hds.map(h=>h.d?(h.d.revpar_mes/1000).toFixed(1):0)},
+    {label:"ADR AA",type:"line",borderColor:"#9E8E5A",pointBackgroundColor:"#9E8E5A",data:hds.map(h=>h.d?((h.d.adr_mes_aa||0)/1000).toFixed(1):0),tension:.3},
+  ]},options:op});
+  const rp=$("chartRP");
+  if(rp)CO.rp=new Chart(rp,{type:"bar",data:{labels:lb,datasets:[
+    {label:"RevPAR Mes",backgroundColor:hds.map(h=>h.color+"EE"),data:hds.map(h=>h.d?((h.d.revpar_mes||0)/1000).toFixed(1):0)},
     {label:"RevPAR Mes Ant.",backgroundColor:hds.map(h=>h.color+"55"),data:hds.map(h=>h.d?((h.d.revpar_mes_ma||0)/1000).toFixed(1):0)},
-  ]},options:opts});
-
-  const rv=$("chartRevenue");
-  if(rv) chartsObjects.rv=new Chart(rv,{type:"bar",
-    data:{labels,datasets:[
-      {label:"Rooms",backgroundColor:"#378ADD99",data:hds.map(h=>h.d?(h.d.rev_rooms_mes/1e6).toFixed(1):0)},
-      {label:"A&B",  backgroundColor:"#1D9E7599",data:hds.map(h=>h.d?(h.d.rev_aabb_mes/1e6).toFixed(1):0)},
-      {label:"Extras",backgroundColor:"#D85A3099",data:hds.map(h=>h.d?(h.d.rev_extras_mes/1e6).toFixed(1):0)},
-    ]},options:{...opts,scales:{...opts.scales,x:{...opts.scales.x,stacked:true},y:{...opts.scales.y,stacked:true}}}});
-  chartsInited=true;
+  ]},options:op});
+  const rv=$("chartRev");
+  if(rv)CO.rv=new Chart(rv,{type:"bar",data:{labels:lb,datasets:[
+    {label:"Rooms",backgroundColor:"#378ADD99",data:hds.map(h=>h.d?((h.d.rev_rooms_mes||0)/1e6).toFixed(1):0)},
+    {label:"A&B",backgroundColor:"#1D9E7599",data:hds.map(h=>h.d?((h.d.rev_aabb_mes||0)/1e6).toFixed(1):0)},
+    {label:"Extras",backgroundColor:"#D85A3099",data:hds.map(h=>h.d?((h.d.rev_extras_mes||0)/1e6).toFixed(1):0)},
+  ]},options:{...op,scales:{...op.scales,x:{...op.scales.x,stacked:true},y:{...op.scales.y,stacked:true}}}});
 }
 
-// RENDER CENTRAL
 let fechaActual=DB.ultima_fecha;
 function renderAll(fecha){
   fechaActual=fecha;
   const d=fecha.split("-").reverse().join("/");
   $("badge-fecha").textContent=d;
-  $("footer-info").textContent="Manager Report K007 · "+d+" · informedeventas.netlify.app";
-  renderAlertas(fecha); renderResumen(fecha); renderHoteles(fecha); renderSegmentos(fecha);
-  chartsInited=false;
+  $("footer-info").textContent="Manager Report K007 \u00b7 "+d+" \u00b7 informedeventas.netlify.app";
+  renderAlertas(fecha);renderCadena(fecha);renderHoteles(fecha);renderSeg(fecha);
 }
-
 function showTab(name,event){
   document.querySelectorAll(".tab-panel").forEach(p=>p.classList.remove("active"));
   document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
   $("tab-"+name).classList.add("active");
-  if(event) event.target.classList.add("active");
-  if(name==="graficos") renderGraficos(fechaActual);
+  if(event)event.target.classList.add("active");
+  if(name==="graficos")renderGraficos(fechaActual);
 }
-
 function initDateButtons(){
   const c=$("date-buttons");
   [...DB.fechas].sort().reverse().forEach(f=>{
     const btn=document.createElement("button");
-    btn.className="date-btn"+(f===DB.ultima_fecha?" latest-badge":"");
+    btn.className="date-btn"+(f===DB.ultima_fecha?" latest":"");
     btn.textContent=f.split("-").reverse().join("/");
-    if(f===DB.ultima_fecha) btn.classList.add("active");
+    if(f===DB.ultima_fecha)btn.classList.add("active");
     btn.onclick=()=>{
       document.querySelectorAll(".date-btn").forEach(b=>b.classList.remove("active"));
-      btn.classList.add("active"); renderAll(f);
-      if($("tab-graficos").classList.contains("active")){chartsInited=false;renderGraficos(f);}
+      btn.classList.add("active");renderAll(f);
+      if($("tab-graficos").classList.contains("active"))renderGraficos(f);
     };
     c.appendChild(btn);
   });
 }
-
 initDateButtons();
 renderAll(DB.ultima_fecha);
 </script>
