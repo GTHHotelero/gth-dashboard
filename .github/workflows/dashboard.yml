@@ -19,7 +19,7 @@ jobs:
           python-version: '3.11'
 
       - name: Instalar dependencias
-        run: pip install google-auth google-auth-httplib2 google-api-python-client requests
+        run: pip install google-auth google-auth-httplib2 google-api-python-client
 
       - name: Generar y publicar dashboard
         env:
