@@ -39,13 +39,24 @@ jobs:
 
           git remote set-url origin https://x-access-token:${GH_TOKEN}@github.com/GTHHotelero/gth-dashboard.git
 
+          # Traer últimos cambios remotos
+          git fetch origin main
+
+          # Rebase sobre remoto
+          git rebase origin/main || git rebase --abort
+
+          # Agregar archivos
           git add index.html db.json
 
+          # Commit solo si hay cambios
           if git diff --cached --quiet; then
             echo "Sin cambios para commitear"
           else
             git commit -m "Dashboard GTH · $(date +'%d/%m/%Y') · automático"
           fi
 
+          # Actualizar nuevamente antes del push
           git pull --rebase origin main
+
+          # Push final
           git push origin HEAD:main
