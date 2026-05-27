@@ -34,7 +34,6 @@ jobs:
         run: |
           git config user.name "GTH Bot"
           git config user.email "bot@gth.com"
-          git pull origin main --rebase
           git add index.html db.json
           git diff --cached --quiet || git commit -m "Dashboard GTH · $(date +'%d/%m/%Y') · automático"
-          git push origin main
+          git push origin HEAD:main --force
