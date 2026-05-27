@@ -34,8 +34,14 @@ jobs:
         run: |
           git config user.name "GTH Bot"
           git config user.email "bot@gth.com"
-          git fetch origin main
-          git reset --soft origin/main
           git add index.html db.json
-          git diff --cached --quiet || git commit -m "Dashboard GTH · $(date +'%d/%m/%Y') · automático"
-          git push origin main
+          if git diff --cached --quiet; then
+            echo "Sin cambios"
+          else
+            git stash
+            git pull --rebase origin main
+            git stash pop
+            git add index.html db.json
+            git commit -m "Dashboard GTH · $(date +'%d/%m/%Y') · automático"
+            git push origin main
+          fi
