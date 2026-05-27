@@ -31,9 +31,12 @@ jobs:
         run: python generate_dashboard.py
 
       - name: Commit y push
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           git config user.name "GTH Bot"
           git config user.email "bot@gth.com"
+          git remote set-url origin https://x-access-token:${GH_TOKEN}@github.com/GTHHotelero/gth-dashboard.git
           git add index.html db.json
           git diff --cached --quiet || git commit -m "Dashboard GTH · $(date +'%d/%m/%Y') · automático"
           git push origin HEAD:main --force
