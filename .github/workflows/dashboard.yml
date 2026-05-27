@@ -1,4 +1,4 @@
-name: GTH Dashboard · Deploy diario
+name: GTH Dashboard · Deploy diario 
 
 on:
   schedule:
