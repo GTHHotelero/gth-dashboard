@@ -590,3 +590,52 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--g
     Path("index.html").write_text(html, encoding="utf-8")
     print(f"index.html generado: {len(html):,} chars", flush=True)
     print("=== DONE ===", flush=True)
+
+    # Subir index.html a GitHub via API
+    gh_token = os.environ.get("GH_TOKEN")
+    if gh_token:
+        import urllib.request, urllib.error
+        print("Subiendo a GitHub via API...", flush=True)
+        
+        def github_put(path, content_bytes, token, repo="GTHHotelero/gth-dashboard", branch="main"):
+            import urllib.request, urllib.error, json, base64
+            url = f"https://api.github.com/repos/{repo}/contents/{path}"
+            headers = {
+                "Authorization": f"token {token}",
+                "Accept": "application/vnd.github.v3+json",
+                "Content-Type": "application/json",
+                "User-Agent": "GTH-Dashboard"
+            }
+            # Obtener SHA actual
+            sha = None
+            req = urllib.request.Request(url + f"?ref={branch}", headers=headers)
+            try:
+                with urllib.request.urlopen(req) as r:
+                    sha = json.loads(r.read()).get("sha")
+            except:
+                pass
+            
+            body = {
+                "message": f"Dashboard GTH · {datetime.date.today().strftime('%d/%m/%Y')} · automático",
+                "content": base64.b64encode(content_bytes).decode(),
+                "branch": branch
+            }
+            if sha:
+                body["sha"] = sha
+            
+            req = urllib.request.Request(url, data=json.dumps(body).encode(), headers=headers, method="PUT")
+            try:
+                with urllib.request.urlopen(req) as r:
+                    resp = json.loads(r.read())
+                    print(f"  ✅ {path} subido: {resp['commit']['sha'][:8]}", flush=True)
+                    return True
+            except urllib.error.HTTPError as e:
+                print(f"  ❌ Error {path}: {e.code} {e.read().decode()[:200]}", flush=True)
+                return False
+
+        html_bytes = Path("index.html").read_bytes()
+        db_bytes = Path("db.json").read_bytes()
+        github_put("index.html", html_bytes, gh_token)
+        github_put("db.json", db_bytes, gh_token)
+    else:
+        print("Sin GH_TOKEN — no se sube a GitHub", flush=True)
