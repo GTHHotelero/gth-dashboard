@@ -7,7 +7,7 @@ on:
 
 concurrency:
   group: gth-dashboard-deploy
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build-and-deploy:
@@ -20,12 +20,6 @@ jobs:
           token: ${{ secrets.GH_TOKEN }}
           fetch-depth: 0
           ref: main
-
-      - name: Actualizar repo local
-        run: |
-          git fetch origin main
-          git checkout main
-          git pull --rebase origin main
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -45,11 +39,18 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
+          set -e
+
           git config user.name "GTH Bot"
           git config user.email "bot@gth.com"
 
           git remote set-url origin https://x-access-token:${GH_TOKEN}@github.com/GTHHotelero/gth-dashboard.git
 
+          echo "Actualizando branch main antes de commitear..."
+          git fetch origin main
+          git rebase origin/main
+
+          echo "Agregando archivos generados..."
           git add index.html db.json
 
           if git diff --cached --quiet; then
@@ -59,5 +60,19 @@ jobs:
 
           git commit -m "Dashboard GTH · $(date +'%d/%m/%Y') · automático"
 
-          git pull --rebase origin main
-          git push origin HEAD:main
+          echo "Intentando push..."
+          for i in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+
+            if git push origin HEAD:main; then
+              echo "Push realizado correctamente"
+              exit 0
+            fi
+
+            echo "Push rechazado. Reintentando en 5 segundos..."
+            sleep 5
+          done
+
+          echo "No se pudo hacer push después de 3 intentos"
+          exit 1
