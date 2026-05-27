@@ -2,7 +2,7 @@ name: GTH Dashboard · Deploy diario
 
 on:
   schedule:
-    - cron: '0 11 * * *'  # 08:00 AM Argentina (UTC-3)
+    - cron: '0 11 * * *'
   workflow_dispatch:
 
 jobs:
@@ -14,6 +14,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -33,7 +35,6 @@ jobs:
         run: |
           git config user.name "GTH Bot"
           git config user.email "bot@gth.com"
-          git pull --rebase origin main
           git add index.html db.json
           git diff --cached --quiet || git commit -m "Dashboard GTH · $(date +'%d/%m/%Y') · automático"
           git push
