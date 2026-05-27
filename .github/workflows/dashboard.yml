@@ -8,13 +8,12 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          token: ${{ secrets.GH_TOKEN }}
           fetch-depth: 0
 
       - name: Setup Python
@@ -35,6 +34,8 @@ jobs:
         run: |
           git config user.name "GTH Bot"
           git config user.email "bot@gth.com"
+          git fetch origin main
+          git reset --soft origin/main
           git add index.html db.json
           git diff --cached --quiet || git commit -m "Dashboard GTH · $(date +'%d/%m/%Y') · automático"
-          git push --force
+          git push origin main
