@@ -2,13 +2,12 @@ name: GTH Dashboard · Deploy diario
 
 on:
   schedule:
-    - cron: '0 11 * * *'
-  workflow_dispatch:
+    - cron: '0 11 * * *'   # 08:00 hs Argentina (UTC-3)
+  workflow_dispatch:         # también manual
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -18,12 +17,8 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Instalar dependencias
-        run: pip install google-auth google-auth-httplib2 google-api-python-client
-
       - name: Generar y publicar dashboard
         env:
-          GDRIVE_SERVICE_ACCOUNT_JSON: ${{ secrets.GDRIVE_SERVICE_ACCOUNT_JSON }}
           LOGO_B64: ${{ secrets.LOGO_B64 }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: python generate_dashboard.py
