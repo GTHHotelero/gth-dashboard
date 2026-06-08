@@ -114,15 +114,22 @@ def limpiar_f(s):
         return 0.0
 
 def extraer_fila_k007(texto, hotel, fecha_display):
+    """Parser K007 definitivo — 4 hoteles GTH."""
     info = HOTEL_INFO[hotel]
 
-    # Manager
+    # Manager — al principio (PLR/HJC/Soho) o al final (BBA)
     manager = "Sin datos"
-    for linea in texto.strip().split("\n")[:5]:
-        linea = linea.strip()
-        if re.match(r'^[A-Z\u00c1-\u00dc][a-z\u00e0-\u00fc]+ [A-Z\u00c1-\u00dc][a-z\u00e0-\u00fc]+', linea):
-            manager = linea
-            break
+    lineas = texto.strip().split("\n")
+    # Patrón: línea con solo Nombre Apellido (2-3 palabras, primera letra mayúscula)
+    # Manager: exactamente 2 palabras, cada una de 3-10 caracteres
+    pat_manager = re.compile(r'^[A-ZÁÉÍÓÚÑ][a-záéíóúñ]{2,9} [A-ZÁÉÍÓÚÑ][a-záéíóúñ]{2,9}$')
+    for linea in lineas[:5]:
+        if pat_manager.match(linea.strip()):
+            manager = linea.strip(); break
+    if manager == "Sin datos":
+        for linea in reversed(lineas):
+            if pat_manager.match(linea.strip()):
+                manager = linea.strip(); break
 
     def get_sec(label, terminators):
         le = re.escape(label)
@@ -136,10 +143,10 @@ def extraer_fila_k007(texto, hotel, fecha_display):
     NEXT_DIAAA = r'MesAA\b|Mes AA|AñoA\b|Año A|Habitaciones'
     NEXT_MESAA = r'AñoA\b|Año A|Habitaciones'
 
-    dia    = get_sec('Dia',    NEXT_DIA)
-    mes    = get_sec('Mes',    NEXT_MES)
-    dia_aa = get_sec('DiaAA',  NEXT_DIAAA) or get_sec('Dia AA', NEXT_DIAAA)
-    mes_aa = get_sec('MesAA',  NEXT_MESAA) or get_sec('Mes AA', NEXT_MESAA)
+    dia    = get_sec('Dia',   NEXT_DIA)
+    mes    = get_sec('Mes',   NEXT_MES)
+    dia_aa = get_sec('DiaAA', NEXT_DIAAA) or get_sec('Dia AA', NEXT_DIAAA)
+    mes_aa = get_sec('MesAA', NEXT_MESAA) or get_sec('Mes AA', NEXT_MESAA)
 
     def ni(lst, idx):
         try: return int(float(str(lst[idx]).replace(',','')))
@@ -148,36 +155,50 @@ def extraer_fila_k007(texto, hotel, fecha_display):
         try: return float(str(lst[idx]).replace(',',''))
         except: return 0.0
 
-    # Indices fijos K007
-    I_OCUP=7; I_LLEG=9; I_SAL=10; I_ADR=32; I_RP=33; I_ROOMS=35; I_AYB=36
+    def find_adr_idx(nums):
+        """ADR: primer número entre 50000-600000 a partir de idx 20"""
+        for i in range(20, len(nums)):
+            try:
+                v = float(str(nums[i]).replace(',',''))
+                if 50000 <= v <= 600000:
+                    return i
+            except: pass
+        return 32
 
-    dia_ocup  = nf(dia,   I_OCUP);  dia_lleg = ni(dia,  I_LLEG); dia_sal  = ni(dia, I_SAL)
-    dia_adr   = ni(dia,   I_ADR);   dia_rp   = ni(dia,  I_RP)
-    dia_rooms = ni(dia,   I_ROOMS); dia_ayb  = ni(dia,  I_AYB)
-    dia_rev   = ni(dia,   -2) if len(dia) >= 2 else 0
+    # BBA tiene fila extra TOTAL REVENUE/HAB entre REVPAC y Rooms → offset +1
+    tiene_tot_hab = 'TOTAL REVENUE / HAB' in texto.upper()
+    rooms_off = 4 if tiene_tot_hab else 3
+    ayb_off   = 5 if tiene_tot_hab else 4
 
-    mes_ocup  = nf(mes,   I_OCUP);  mes_lleg = ni(mes,  I_LLEG)
-    mes_adr   = ni(mes,   I_ADR);   mes_rp   = ni(mes,  I_RP)
-    mes_rooms = ni(mes,   I_ROOMS); mes_ayb  = ni(mes,  I_AYB)
-    mes_rev   = ni(mes,   -2) if len(mes) >= 2 else 0
+    def get_kpis(sec):
+        if not sec: return {'adr':0,'rp':0,'rooms':0,'ayb':0,'rev':0}
+        s = find_adr_idx(sec)
+        return {
+            'adr':   ni(sec, s),
+            'rp':    ni(sec, s+1),
+            'rooms': ni(sec, s+rooms_off),
+            'ayb':   ni(sec, s+ayb_off),
+            'rev':   ni(sec, -2) if len(sec)>=2 else 0
+        }
 
-    aa_ocup   = nf(dia_aa, I_OCUP); aa_adr   = ni(dia_aa, I_ADR); aa_rp   = ni(dia_aa, I_RP)
-    aa_rooms  = ni(dia_aa, I_ROOMS); aa_ayb  = ni(dia_aa, I_AYB)
-    aa_rev    = ni(dia_aa, -2) if len(dia_aa) >= 2 else 0
+    d   = get_kpis(dia)
+    m   = get_kpis(mes)
+    aa  = get_kpis(dia_aa)
+    maa = get_kpis(mes_aa)
 
-    mes_rev_aa   = ni(mes_aa, -2)      if len(mes_aa) >= 2 else 0
-    mes_rooms_aa = ni(mes_aa, I_ROOMS) if mes_aa else 0
-    mes_ayb_aa   = ni(mes_aa, I_AYB)  if mes_aa else 0
+    dia_ocup = nf(dia,   7); dia_lleg = ni(dia,  9); dia_sal = ni(dia, 10)
+    mes_ocup = nf(mes,   7); mes_lleg = ni(mes,  9)
+    aa_ocup  = nf(dia_aa, 7) if dia_aa else 0.0
 
     return (
         f"{fecha_display},{hotel},{info['color']},{info['hab']},{manager},"
-        f"{dia_ocup},{dia_adr},{dia_rp},{dia_lleg},{dia_sal},"
-        f"{dia_rev},{dia_rooms},{dia_ayb},"
-        f"{aa_rev},{aa_rooms},{aa_ayb},"
-        f"{mes_ocup},{mes_adr},{mes_rp},{mes_lleg},"
-        f"{mes_rev},{mes_rooms},{mes_ayb},"
-        f"{mes_rev_aa},{mes_rooms_aa},{mes_ayb_aa},"
-        f"{aa_ocup},{aa_adr},{aa_rp}"
+        f"{dia_ocup},{d['adr']},{d['rp']},{dia_lleg},{dia_sal},"
+        f"{d['rev']},{d['rooms']},{d['ayb']},"
+        f"{aa['rev']},{aa['rooms']},{aa['ayb']},"
+        f"{mes_ocup},{m['adr']},{m['rp']},{mes_lleg},"
+        f"{m['rev']},{m['rooms']},{m['ayb']},"
+        f"{maa['rev']},{maa['rooms']},{maa['ayb']},"
+        f"{aa_ocup},{aa['adr']},{aa['rp']}"
     )
 
 def claude_completar_datos(api_key, hotel, fecha, texto_pdf, datos_parciales):
@@ -291,10 +312,8 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"Error: {e}", flush=True); sys.exit(1)
 
-    if fecha_str in csv_data:
-        print(f"Fecha {fecha_str} ya existe", flush=True)
-    elif not sa_json:
-        print("Sin Drive SA", flush=True)
+    if not sa_json:
+        print("Sin Drive SA — usando CSV existente", flush=True)
     else:
         import subprocess
         subprocess.run([sys.executable,"-m","pip","install","-q",
@@ -336,13 +355,18 @@ if __name__ == "__main__":
             filas_nuevas.append(fila)
 
         if filas_nuevas:
-            print(f"{len(filas_nuevas)} hoteles OK", flush=True)
+            print(f"{len(filas_nuevas)} hoteles OK — actualizando CSV", flush=True)
             lineas = csv_data.strip().split('\n')
-            csv_nuevo = header + '\n' + '\n'.join(filas_nuevas) + '\n' + '\n'.join(lineas[1:])
+            # Eliminar filas existentes de esta fecha (para pisar con datos nuevos)
+            lineas_sin_fecha = [l for l in lineas[1:] if not l.startswith(fecha_str + ',')]
+            eliminadas = len(lineas[1:]) - len(lineas_sin_fecha)
+            if eliminadas:
+                print(f"  Pisando {eliminadas} filas existentes del {fecha_str}", flush=True)
+            csv_nuevo = header + '\n' + '\n'.join(filas_nuevas) + '\n' + '\n'.join(lineas_sin_fecha)
             github_put("datos.csv", csv_nuevo.encode("utf-8"), gh_token, sha=csv_sha)
             csv_data = csv_nuevo
         else:
-            print("Sin datos nuevos", flush=True)
+            print(f"Sin PDFs del {fecha_str} disponibles", flush=True)
 
     print("Generando HTMLs...", flush=True)
     html_dash = build_dashboard(csv_data, logo_b64)
