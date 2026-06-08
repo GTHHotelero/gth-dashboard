@@ -18,10 +18,7 @@ jobs:
           python-version: '3.11'
 
       - name: Generar y publicar dashboard
-        env:
-          LOGO_B64: ${{ secrets.LOGO_B64 }}
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: python generate_dashboard.py
+        
 env:
           LOGO_B64: ${{ secrets.LOGO_B64 }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
