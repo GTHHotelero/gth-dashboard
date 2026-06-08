@@ -365,6 +365,8 @@ if __name__ == "__main__":
                 print(f"    Texto insuficiente ({len(texto) if texto else 0} chars)", flush=True)
                 continue
             print(f"    Texto: {len(texto)} chars", flush=True)
+            if hotel == "Soho Park":
+                print(f"    FULL TEXT: {repr(texto)}", flush=True)
             fila = extraer_fila_k007(texto, hotel, fecha_str)
             campos = fila.split(',')
             print(f"    Parser: Ocup={campos[5]}% ADR={campos[6]} Rev={campos[10]}", flush=True)
