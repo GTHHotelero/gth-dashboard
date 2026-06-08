@@ -69,7 +69,7 @@ def get_drive_service(sa_json):
 
 def buscar_pdf(service, folder_id, fecha):
     """Busca el PDF de la fecha en la carpeta. fecha en formato YYYY.MM.DD"""
-    query = f"'{folder_id}' in parents and mimeType='application/pdf' and name contains '{fecha}'"
+    query = f"'{folder_id}' in parents and mimeType='application/pdf' and title contains '{fecha}'"
     result = service.files().list(q=query, fields="files(id,name)", pageSize=5).execute()
     files = result.get("files", [])
     if files:
@@ -108,7 +108,7 @@ def claude_extraer_datos(api_key, hotel, fecha_display, texto_pdf):
 Extraé los datos del siguiente reporte K007 del hotel {hotel} del día {fecha_display}.
 
 TEXTO DEL PDF:
-{texto_pdf[:8000]}
+{texto_pdf[:6000]}
 
 Respondé ÚNICAMENTE con una línea CSV con exactamente estos campos en este orden (sin encabezado, sin explicaciones, sin texto extra):
 Fecha,Hotel,Color,Hab,Manager,Dia_Ocup,Dia_ADR,Dia_RevPAR,Dia_Lleg,Dia_Sal,Dia_Rev,Dia_Rooms,Dia_AyB,Dia_Rev_AA,Dia_Rooms_AA,Dia_AyB_AA,Mes_Ocup,Mes_ADR,Mes_RevPAR,Mes_Lleg,Mes_Rev,Mes_Rooms,Mes_AyB,Mes_Rev_AA,Mes_Rooms_AA,Mes_AyB_AA,AA_Ocup,AA_ADR,AA_RevPAR
@@ -270,18 +270,8 @@ if __name__ == "__main__":
             # Buscar PDF
             pdf = buscar_pdf(service, folder_id, fecha_drive)
             if not pdf:
-                print(f"    Sin PDF del {fecha_drive} — marcando sin_k007", flush=True)
-                # Buscar último PDF para obtener datos del mes
-                result = service.files().list(
-                    q=f"'{folder_id}' in parents and mimeType='application/pdf'",
-                    orderBy="name desc", pageSize=1, fields="files(id,name)"
-                ).execute()
-                ultimo = result.get("files", [{}])[0]
-                if ultimo:
-                    texto = exportar_pdf_como_texto(service, ultimo["id"])
-                else:
-                    texto = ""
-                # Para sin_k007 igualmente llamamos a Claude para extraer datos del mes
+                print(f"    Sin PDF del {fecha_drive} — saltando", flush=True)
+                continue
             else:
                 print(f"    Leyendo {pdf['name']}...", flush=True)
                 texto = exportar_pdf_como_texto(service, pdf["id"])
