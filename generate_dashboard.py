@@ -114,82 +114,60 @@ def limpiar_f(s):
         return 0.0
 
 def extraer_fila_k007(texto, hotel, fecha_display):
-    """
-    Parser basado en índices exactos del K007 Crystal Reports.
-    Estructura de columnas: Dia | Mes | Año | Dia AA | Mes AA | Año A
-    Índices por fila:
-      0=HabTotales, 1=FueraUso, 2=Activas, 3=Reparacion, 4=DispVenta
-      5=HabOcupadas, 6=HabDisponibles
-      7=Ocup%, 8=Disp%
-      9=Llegadas, 10=Salidas, 11=Adultos, 12=Menores1, 13=Menores2
-      14=Pernoctes, 15=VIP, 16=NoShow, 17=WalkIn, 18=DayUse
-      19=NochesGrupo, 20=RoomRevGrupo, 21=TotRevGrupo
-      22=Complimentary, 23=HouseUse, 24=Rack, 25=Corporativa
-      26=AgenciaViaje, 27=Promocional, 28=DayUse, 29=Operador
-      30=OTAS, 31=Otras
-      32=ADR, 33=RevPAR, 34=REVPAC
-      35=Rooms, 36=AyB, 37=Revenue(AyB), 38=Extras
-      39=HotelRevenue(sinIVA), 40=HotelRevenueCIVA
-    """
     info = HOTEL_INFO[hotel]
 
-    # Manager — primera línea del texto
+    # Manager
     manager = "Sin datos"
-    lineas = texto.strip().split("\n")
-    for linea in lineas[:5]:
+    for linea in texto.strip().split("\n")[:5]:
         linea = linea.strip()
-        if linea and re.match(r'^[A-Z\u00c1\u00c9\u00cd\u00d3\u00da\u00d1][a-z\u00e1\u00e9\u00ed\u00f3\u00fa\u00f1]+ [A-Z\u00c1\u00c9\u00cd\u00d3\u00da\u00d1][a-z\u00e1\u00e9\u00ed\u00f3\u00fa\u00f1]+$', linea):
+        if re.match(r'^[A-Z\u00c1-\u00dc][a-z\u00e0-\u00fc]+ [A-Z\u00c1-\u00dc][a-z\u00e0-\u00fc]+', linea):
             manager = linea
             break
 
-    def get_sec(label):
-        """Extrae lista de números de una sección del PDF"""
-        pat = rf'\b{re.escape(label)}\b\s*\n([\s\S]+?)(?=\n\s*(?:Mes\b|Año\b|Ano\b|Dia AA|Mes AA|Año A|Cantidad de Llegadas de Hoy|\Z))'
+    def get_sec(label, terminators):
+        le = re.escape(label)
+        pat = rf'\b{le}\b\s*\n([\s\S]+?)(?=\n\s*(?:{terminators}|\Z))'
         m = re.search(pat, texto)
         if not m: return []
         return re.findall(r'[\d,]+\.?\d*', m.group(1))
 
-    def n(lst, idx, tipo='int'):
-        try:
-            v = lst[idx].replace(',','')
-            return float(v) if tipo=='float' else int(float(v))
-        except: return 0.0 if tipo=='float' else 0
+    NEXT_DIA   = r'Mes\b|Año\b|DiaAA\b|Dia AA|Habitaciones'
+    NEXT_MES   = r'Año\b|DiaAA\b|MesAA\b|Dia AA|Mes AA|Habitaciones'
+    NEXT_DIAAA = r'MesAA\b|Mes AA|AñoA\b|Año A|Habitaciones'
+    NEXT_MESAA = r'AñoA\b|Año A|Habitaciones'
 
-    dia    = get_sec('Dia')
-    mes    = get_sec('Mes')
-    anio   = get_sec('Año') or get_sec('Ano')
-    dia_aa = get_sec('Dia AA')
-    mes_aa = get_sec('Mes AA')
+    dia    = get_sec('Dia',    NEXT_DIA)
+    mes    = get_sec('Mes',    NEXT_MES)
+    dia_aa = get_sec('DiaAA',  NEXT_DIAAA) or get_sec('Dia AA', NEXT_DIAAA)
+    mes_aa = get_sec('MesAA',  NEXT_MESAA) or get_sec('Mes AA', NEXT_MESAA)
 
-    # Índices exactos según estructura K007
-    dia_ocup   = n(dia,   7, 'float')
-    dia_lleg   = n(dia,   9)
-    dia_sal    = n(dia,  10)
-    dia_adr    = n(dia,  32)
-    dia_rp     = n(dia,  33)
-    dia_rooms  = n(dia,  35)
-    dia_ayb    = n(dia,  36)
-    dia_rev    = n(dia,  39)
+    def ni(lst, idx):
+        try: return int(float(str(lst[idx]).replace(',','')))
+        except: return 0
+    def nf(lst, idx):
+        try: return float(str(lst[idx]).replace(',',''))
+        except: return 0.0
 
-    mes_ocup   = n(mes,   7, 'float')
-    mes_lleg   = n(mes,   9)
-    mes_adr    = n(mes,  32)
-    mes_rp     = n(mes,  33)
-    mes_rooms  = n(mes,  35)
-    mes_ayb    = n(mes,  36)
-    mes_rev    = n(mes,  39)
+    # Indices fijos K007
+    I_OCUP=7; I_LLEG=9; I_SAL=10; I_ADR=32; I_RP=33; I_ROOMS=35; I_AYB=36
 
-    # Año anterior (Dia AA y Mes AA)
-    aa_ocup    = n(dia_aa, 7, 'float')
-    aa_adr     = n(dia_aa,32)
-    aa_rp      = n(dia_aa,33)
-    aa_rev     = n(dia_aa,39)
-    aa_rooms   = n(dia_aa,35)
-    aa_ayb     = n(dia_aa,36)
+    dia_ocup  = nf(dia,   I_OCUP);  dia_lleg = ni(dia,  I_LLEG); dia_sal  = ni(dia, I_SAL)
+    dia_adr   = ni(dia,   I_ADR);   dia_rp   = ni(dia,  I_RP)
+    dia_rooms = ni(dia,   I_ROOMS); dia_ayb  = ni(dia,  I_AYB)
+    dia_rev   = ni(dia,   -2) if len(dia) >= 2 else 0
 
-    mes_rev_aa   = n(mes_aa,39)
-    mes_rooms_aa = n(mes_aa,35)
-    mes_ayb_aa   = n(mes_aa,36)
+    mes_ocup  = nf(mes,   I_OCUP);  mes_lleg = ni(mes,  I_LLEG)
+    mes_adr   = ni(mes,   I_ADR);   mes_rp   = ni(mes,  I_RP)
+    mes_rooms = ni(mes,   I_ROOMS); mes_ayb  = ni(mes,  I_AYB)
+    mes_rev   = ni(mes,   -2) if len(mes) >= 2 else 0
+
+    aa_ocup   = nf(dia_aa, I_OCUP); aa_adr   = ni(dia_aa, I_ADR); aa_rp   = ni(dia_aa, I_RP)
+    aa_rooms  = ni(dia_aa, I_ROOMS); aa_ayb  = ni(dia_aa, I_AYB)
+    aa_rev    = ni(dia_aa, -2) if len(dia_aa) >= 2 else 0
+
+    mes_rev_aa   = ni(mes_aa, -2)      if len(mes_aa) >= 2 else 0
+    mes_rooms_aa = ni(mes_aa, I_ROOMS) if mes_aa else 0
+    mes_ayb_aa   = ni(mes_aa, I_AYB)  if mes_aa else 0
 
     return (
         f"{fecha_display},{hotel},{info['color']},{info['hab']},{manager},"
