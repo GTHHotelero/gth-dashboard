@@ -114,107 +114,82 @@ def limpiar_f(s):
         return 0.0
 
 def extraer_fila_k007(texto, hotel, fecha_display):
+    """
+    Parser basado en índices exactos del K007 Crystal Reports.
+    Estructura de columnas: Dia | Mes | Año | Dia AA | Mes AA | Año A
+    Índices por fila:
+      0=HabTotales, 1=FueraUso, 2=Activas, 3=Reparacion, 4=DispVenta
+      5=HabOcupadas, 6=HabDisponibles
+      7=Ocup%, 8=Disp%
+      9=Llegadas, 10=Salidas, 11=Adultos, 12=Menores1, 13=Menores2
+      14=Pernoctes, 15=VIP, 16=NoShow, 17=WalkIn, 18=DayUse
+      19=NochesGrupo, 20=RoomRevGrupo, 21=TotRevGrupo
+      22=Complimentary, 23=HouseUse, 24=Rack, 25=Corporativa
+      26=AgenciaViaje, 27=Promocional, 28=DayUse, 29=Operador
+      30=OTAS, 31=Otras
+      32=ADR, 33=RevPAR, 34=REVPAC
+      35=Rooms, 36=AyB, 37=Revenue(AyB), 38=Extras
+      39=HotelRevenue(sinIVA), 40=HotelRevenueCIVA
+    """
     info = HOTEL_INFO[hotel]
 
-    # Manager
+    # Manager — primera línea del texto
     manager = "Sin datos"
-    for pat in [
-        rf'([A-Z\u00c1\u00c9\u00cd\u00d3\u00da\u00d1][a-z\u00e1\u00e9\u00ed\u00f3\u00fa\u00f1]+ [A-Z\u00c1\u00c9\u00cd\u00d3\u00da\u00d1][a-z\u00e1\u00e9\u00ed\u00f3\u00fa\u00f1]+)\s*\n\s*(?:HJ|Howard|Soho)',
-        r'Manager[:\s]+([A-Za-z\u00e1\u00e9\u00ed\u00f3\u00fa\u00f1\u00c1\u00c9\u00cd\u00d3\u00da\u00d1 ]+)\n',
-    ]:
-        m = re.search(pat, texto)
-        if m:
-            manager = m.group(1).strip()
+    lineas = texto.strip().split("\n")
+    for linea in lineas[:5]:
+        linea = linea.strip()
+        if linea and re.match(r'^[A-Z\u00c1\u00c9\u00cd\u00d3\u00da\u00d1][a-z\u00e1\u00e9\u00ed\u00f3\u00fa\u00f1]+ [A-Z\u00c1\u00c9\u00cd\u00d3\u00da\u00d1][a-z\u00e1\u00e9\u00ed\u00f3\u00fa\u00f1]+$', linea):
+            manager = linea
             break
 
-    # Extraer secciones numéricas
-    # El PDF tiene columnas: Dia | Mes | Año | Dia AA | Mes AA | Año AA
-    # pdfminer los extrae como bloques separados por sección
-
     def get_sec(label):
-        """Extrae números de una sección por su encabezado"""
-        pat = rf'(?<!\w){re.escape(label)}(?!\w)\s*\n([\s\S]{{20,500}}?)(?=\n\s*(?:Dia|Mes|A[ñn]o|Totales|Manager|\Z))'
-        m = re.search(pat, texto, re.IGNORECASE)
+        """Extrae lista de números de una sección del PDF"""
+        pat = rf'\b{re.escape(label)}\b\s*\n([\s\S]+?)(?=\n\s*(?:Mes\b|Año\b|Ano\b|Dia AA|Mes AA|Año A|Cantidad de Llegadas de Hoy|\Z))'
+        m = re.search(pat, texto)
         if not m: return []
-        return re.findall(r'\d{1,3}(?:[,\.]\d{3})*(?:\.\d+)?', m.group(1))
+        return re.findall(r'[\d,]+\.?\d*', m.group(1))
 
-    # Intentar extraer por bloques de columna
-    # En el formato pdfminer, a veces viene todo junto
-    # Buscar los números en orden de aparición dentro de cada bloque
+    def n(lst, idx, tipo='int'):
+        try:
+            v = lst[idx].replace(',','')
+            return float(v) if tipo=='float' else int(float(v))
+        except: return 0.0 if tipo=='float' else 0
 
-    # Parsear todas las secciones
-    secs = {}
-    for label in ['Dia', 'Mes', 'Año', 'Ano', 'Dia AA', 'Mes AA']:
-        nums = get_sec(label)
-        if nums:
-            secs[label] = nums
+    dia    = get_sec('Dia')
+    mes    = get_sec('Mes')
+    anio   = get_sec('Año') or get_sec('Ano')
+    dia_aa = get_sec('Dia AA')
+    mes_aa = get_sec('Mes AA')
 
-    # Si no encontró secciones, intentar extraer todo junto
-    if not secs:
-        # Buscar el bloque de números después del encabezado
-        todos = re.findall(r'\d{1,3}(?:[,\.]\d{3})*(?:\.\d+)?', texto)
-        if len(todos) > 20:
-            # Asumir que vienen en grupos de ~30 por sección
-            chunk = len(todos) // max(1, 3)
-            secs = {
-                'Dia': todos[:chunk],
-                'Mes': todos[chunk:chunk*2],
-                'Mes AA': todos[chunk*2:chunk*3]
-            }
+    # Índices exactos según estructura K007
+    dia_ocup   = n(dia,   7, 'float')
+    dia_lleg   = n(dia,   9)
+    dia_sal    = n(dia,  10)
+    dia_adr    = n(dia,  32)
+    dia_rp     = n(dia,  33)
+    dia_rooms  = n(dia,  35)
+    dia_ayb    = n(dia,  36)
+    dia_rev    = n(dia,  39)
 
-    def g(sec, idx, tipo='int'):
-        nums = secs.get(sec, secs.get(sec.replace('ñ','n'), []))
-        if idx < len(nums):
-            return limpiar_f(nums[idx]) if tipo=='float' else limpiar(nums[idx])
-        return 0
+    mes_ocup   = n(mes,   7, 'float')
+    mes_lleg   = n(mes,   9)
+    mes_adr    = n(mes,  32)
+    mes_rp     = n(mes,  33)
+    mes_rooms  = n(mes,  35)
+    mes_ayb    = n(mes,  36)
+    mes_rev    = n(mes,  39)
 
-    # Estructura del K007 Crystal Reports:
-    # idx 0-4: Hab Totales, Fuera Uso, Hab Activas, En Reparación, Disponibles Venta
-    # idx 5: Hab Ocupadas
-    # idx 6: Hab Disponibles  
-    # idx 7: Ocup%
-    # idx 8: Disponibles%
-    # idx 9: Llegadas
-    # idx 10: Salidas
-    # [segmentos varios]
-    # Luego en otra parte: Tarifa Promedio, RevPAR, Rooms, AyB, Hotel Revenue
+    # Año anterior (Dia AA y Mes AA)
+    aa_ocup    = n(dia_aa, 7, 'float')
+    aa_adr     = n(dia_aa,32)
+    aa_rp      = n(dia_aa,33)
+    aa_rev     = n(dia_aa,39)
+    aa_rooms   = n(dia_aa,35)
+    aa_ayb     = n(dia_aa,36)
 
-    dia_ocup  = g('Dia', 7, 'float')
-    dia_lleg  = g('Dia', 9)
-    dia_sal   = g('Dia', 10)
-    mes_ocup  = g('Mes', 7, 'float')
-    mes_lleg  = g('Mes', 9)
-
-    # Para ADR, RevPAR, Revenue — buscar directamente en el texto completo
-    def buscar_kpi(patron):
-        """Busca patrón y retorna 5 valores numéricos (Dia, Mes, Año, DiaAA, MesAA)"""
-        m = re.search(patron + r'([\s\S]{0,200})', texto, re.IGNORECASE)
-        if not m: return [0]*5
-        nums = re.findall(r'\d{1,3}(?:[,\.]\d{3})+|\d{4,}', m.group(1))
-        result = [limpiar(n) for n in nums[:5]]
-        while len(result) < 5: result.append(0)
-        return result
-
-    # Tarifa Promedio (ADR)
-    adr_vals = buscar_kpi(r'Tarifa\s+Promedio')
-    # RevPAR
-    rp_vals  = buscar_kpi(r'REVPAR')
-    # Rooms Revenue
-    rooms_vals = buscar_kpi(r'\bRooms\b')
-    # AA&BB
-    ayb_vals = buscar_kpi(r'AA\s*[&\\]+\s*BB')
-    # Hotel Revenue (sin IVA — primera aparición)
-    rev_vals = buscar_kpi(r'Hotel\s+Revenue(?!\s+C)')
-
-    dia_adr    = adr_vals[0];  mes_adr    = adr_vals[1];  aa_adr    = adr_vals[3];  mes_adr_aa  = adr_vals[4]
-    dia_rp     = rp_vals[0];   mes_rp     = rp_vals[1];   aa_rp     = rp_vals[3];   mes_rp_aa   = rp_vals[4]
-    dia_rooms  = rooms_vals[0]; mes_rooms  = rooms_vals[1]; aa_rooms  = rooms_vals[3]; mes_rooms_aa = rooms_vals[4]
-    dia_ayb    = ayb_vals[0];  mes_ayb    = ayb_vals[1];  aa_ayb    = ayb_vals[3];  mes_ayb_aa  = ayb_vals[4]
-    dia_rev    = rev_vals[0];  mes_rev    = rev_vals[1];  aa_rev    = rev_vals[3];  mes_rev_aa  = rev_vals[4]
-
-    # AA Ocup (año anterior)
-    aa_ocup_vals = get_sec('Año') or get_sec('Ano')
-    aa_ocup = limpiar_f(aa_ocup_vals[7]) if len(aa_ocup_vals) > 7 else 0.0
+    mes_rev_aa   = n(mes_aa,39)
+    mes_rooms_aa = n(mes_aa,35)
+    mes_ayb_aa   = n(mes_aa,36)
 
     return (
         f"{fecha_display},{hotel},{info['color']},{info['hab']},{manager},"
@@ -226,7 +201,6 @@ def extraer_fila_k007(texto, hotel, fecha_display):
         f"{mes_rev_aa},{mes_rooms_aa},{mes_ayb_aa},"
         f"{aa_ocup},{aa_adr},{aa_rp}"
     )
-
 
 def claude_completar_datos(api_key, hotel, fecha, texto_pdf, datos_parciales):
     """Usa Claude API para extraer datos del PDF incluso con texto parcial"""
