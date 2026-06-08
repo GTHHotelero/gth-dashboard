@@ -113,16 +113,104 @@ def limpiar_f(s):
     except:
         return 0.0
 
-def extraer_fila_k007(texto, hotel, fecha_display):
-    """Parser K007 definitivo — 4 hoteles GTH."""
+def es_formato_bba(texto):
+    """BBA pdfminer tiene números ANTES de los labels: '7.69\nPorcentaje de Ocupación'"""
+    return bool(re.search(r'[\d\.]+\nPorcentaje de Ocupaci', texto))
+
+def extraer_fila_bba(texto, hotel, fecha_display):
+    """Parser para BBA — números antes de labels en sección Dia."""
     info = HOTEL_INFO[hotel]
 
-    # Manager — al principio (PLR/HJC/Soho) o al final (BBA)
+    # Manager al principio (BBA lo pone al inicio en pdfminer)
     manager = "Sin datos"
-    lineas = texto.strip().split("\n")
-    # Patrón: línea con solo Nombre Apellido (2-3 palabras, primera letra mayúscula)
-    # Manager: exactamente 2 palabras, cada una de 3-10 caracteres
+    mgr_m = re.match(r'^([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+){1,2})\s*\n', texto.strip())
+    if mgr_m:
+        manager = mgr_m.group(1)
+
+    def vbl(label):
+        """Valor antes del label"""
+        m = re.search(r'([\d,\.]+)\n' + re.escape(label), texto)
+        return float(m.group(1).replace(',','')) if m else 0.0
+
+    # Sección Mes (vertical normal)
+    def get_sec(label, terminators):
+        le = re.escape(label)
+        pat = rf'\b{le}\b\s*\n([\s\S]+?)(?=\n\s*(?:{terminators}|\Z))'
+        m = re.search(pat, texto)
+        if not m: return []
+        return re.findall(r'[\d,]+\.?\d*', m.group(1))
+
+    NEXT_MES = r'Año\b|DiaAA\b|MesAA\b|AñoA\b|Habitaciones'
+    mes_sec = get_sec('Mes', NEXT_MES)
+
+    def ni(lst, idx):
+        try: return int(float(str(lst[idx]).replace(',','')))
+        except: return 0
+    def nf(lst, idx):
+        try: return float(str(lst[idx]).replace(',',''))
+        except: return 0.0
+
+    def find_adr_idx(nums):
+        for i in range(20, len(nums)):
+            try:
+                v = float(str(nums[i]).replace(',',''))
+                if 50000 <= v <= 600000: return i
+            except: pass
+        return 32
+
+    # Datos del día — por valor antes del label
+    dia_ocup  = vbl('Porcentaje de Ocupación')
+    dia_lleg  = int(vbl('Cantidad de Llegadas'))
+    dia_sal   = int(vbl('Cantidad de Salidas'))
+    dia_adr   = int(vbl('Tarifa Promedio'))
+    dia_rooms = int(vbl('Rooms'))
+    dia_ayb_m = re.search(r'([\d,]+)\nAA[&\\]+BB', texto)
+    dia_ayb   = int(float(dia_ayb_m.group(1).replace(',',''))) if dia_ayb_m else 0
+    dia_rev_m = re.search(r'([\d,]+)\nHotel Revenue\n', texto)
+    dia_rev   = int(float(dia_rev_m.group(1).replace(',',''))) if dia_rev_m else 0
+    # REVPAR
+    rp_m = re.search(r'REVPAR\n([\d,]+)', texto)
+    dia_rp = int(float(rp_m.group(1).replace(',',''))) if rp_m else 0
+
+    # Datos del mes — de la sección Mes vertical
+    if mes_sec and len(mes_sec) > 35:
+        s = find_adr_idx(mes_sec)
+        mes_ocup  = nf(mes_sec, 7)
+        mes_lleg  = ni(mes_sec, 9)
+        mes_adr   = ni(mes_sec, s)
+        mes_rp    = ni(mes_sec, s+1)
+        mes_rooms = ni(mes_sec, s+4)
+        mes_ayb   = ni(mes_sec, s+5)
+        mes_rev   = ni(mes_sec, -2) if len(mes_sec)>=2 else 0
+    else:
+        mes_ocup = mes_lleg = mes_adr = mes_rp = mes_rooms = mes_ayb = mes_rev = 0
+
+    return (
+        f"{fecha_display},{hotel},{info['color']},{info['hab']},{manager},"
+        f"{dia_ocup},{dia_adr},{dia_rp},{dia_lleg},{dia_sal},"
+        f"{dia_rev},{dia_rooms},{dia_ayb},"
+        f"0,0,0,"
+        f"{mes_ocup},{mes_adr},{mes_rp},{mes_lleg},"
+        f"{mes_rev},{mes_rooms},{mes_ayb},"
+        f"0,0,0,"
+        f"0.0,0,0"
+    )
+
+
+def extraer_fila_k007(texto, hotel, fecha_display):
+    """Parser K007 — detecta formato BBA automáticamente."""
+    # BBA tiene formato horizontal en el snippet de Drive
+    # pero pdfminer lo extrae con secciones verticales mezcladas
+    # Detectar por presencia de datos numéricos junto al label "Porcentaje de Ocupación"
+    if hotel == "HJ Bahia Blanca" or es_formato_bba(texto):
+        return extraer_fila_bba(texto, hotel, fecha_display)
+
+    info = HOTEL_INFO[hotel]
+
+    # Manager — al principio (PLR/HJC/Soho)
+    manager = "Sin datos"
     pat_manager = re.compile(r'^[A-ZÁÉÍÓÚÑ][a-záéíóúñ]{2,9} [A-ZÁÉÍÓÚÑ][a-záéíóúñ]{2,9}$')
+    lineas = texto.strip().split("\n")
     for linea in lineas[:5]:
         if pat_manager.match(linea.strip()):
             manager = linea.strip(); break
@@ -156,16 +244,13 @@ def extraer_fila_k007(texto, hotel, fecha_display):
         except: return 0.0
 
     def find_adr_idx(nums):
-        """ADR: primer número entre 50000-600000 a partir de idx 20"""
         for i in range(20, len(nums)):
             try:
                 v = float(str(nums[i]).replace(',',''))
-                if 50000 <= v <= 600000:
-                    return i
+                if 50000 <= v <= 600000: return i
             except: pass
         return 32
 
-    # BBA tiene fila extra TOTAL REVENUE/HAB entre REVPAC y Rooms → offset +1
     tiene_tot_hab = 'TOTAL REVENUE / HAB' in texto.upper()
     rooms_off = 4 if tiene_tot_hab else 3
     ayb_off   = 5 if tiene_tot_hab else 4
