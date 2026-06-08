@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
 GTH Dashboard Generator — Automatización completa
-1. Llama a Claude API para leer PDFs de Drive y generar CSV actualizado
-2. Genera index.html y ejecutivo.html desde los templates
-3. Sube todo a GitHub via API
+1. Lee PDFs de Drive via Service Account
+2. Envía texto a Claude API para extraer datos
+3. Actualiza datos.csv
+4. Genera y publica index.html + ejecutivo.html
 """
 import os, sys, json, base64, datetime, urllib.request, urllib.error, csv, io, time
 from collections import defaultdict
@@ -11,14 +12,21 @@ from collections import defaultdict
 REPO   = "GTHHotelero/gth-dashboard"
 BRANCH = "main"
 
-FOLDER_IDS = {
+CARPETAS = {
     "HJ Plaza La Ribera":    "1B3B4c69OE4ouLCU0b2CvdpHlz5CpYCsZ",
-    "Howard Johnson Cariló": "15xh9xe37h5lFrT03LVlfoXWIbfs41NJu",
+    "Howard Johnson Caril\u00f3": "15xh9xe37h5lFrT03LVlfoXWIbfs41NJu",
     "Soho Park":             "1ZFrp8rMQHltIX81uECZKFhqyMDF4pA3N",
     "HJ Bahia Blanca":       "1AAPKDiSib61wRj-rrzljQx-682F7Rczj",
 }
 
-# ── GitHub helpers ────────────────────────────────────────────────
+HOTEL_INFO = {
+    "HJ Plaza La Ribera":    {"color":"#378ADD","hab":104},
+    "Howard Johnson Caril\u00f3": {"color":"#1D9E75","hab":120},
+    "Soho Park":             {"color":"#D85A30","hab":43},
+    "HJ Bahia Blanca":       {"color":"#8B6914","hab":79},
+}
+
+# ── GitHub ────────────────────────────────────────────────────────
 def github_get(path, token):
     url = f"https://api.github.com/repos/{REPO}/contents/{path}?ref={BRANCH}"
     headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json", "User-Agent": "GTH-Dashboard"}
@@ -39,7 +47,7 @@ def github_put(path, content_bytes, token, sha=None):
             print(f"  ✅ {path}: {resp['commit']['sha'][:8]}", flush=True)
             return True
     except urllib.error.HTTPError as e:
-        print(f"  ❌ {path}: {e.code} {e.read().decode()[:300]}", flush=True)
+        print(f"  ❌ {path}: {e.code} {e.read().decode()[:200]}", flush=True)
         return False
 
 def get_sha(path, token):
@@ -49,8 +57,88 @@ def get_sha(path, token):
     except:
         return None
 
+# ── Google Drive ──────────────────────────────────────────────────
+def get_drive_service(sa_json):
+    from google.oauth2 import service_account
+    from googleapiclient.discovery import build
+    creds = service_account.Credentials.from_service_account_info(
+        json.loads(sa_json),
+        scopes=["https://www.googleapis.com/auth/drive.readonly"]
+    )
+    return build("drive", "v3", credentials=creds)
+
+def buscar_pdf(service, folder_id, fecha):
+    """Busca el PDF de la fecha en la carpeta. fecha en formato YYYY.MM.DD"""
+    query = f"'{folder_id}' in parents and mimeType='application/pdf' and name contains '{fecha}'"
+    result = service.files().list(q=query, fields="files(id,name)", pageSize=5).execute()
+    files = result.get("files", [])
+    if files:
+        # Ordenar por nombre descendente para tomar el más reciente
+        files.sort(key=lambda x: x["name"], reverse=True)
+        return files[0]
+    return None
+
+def exportar_pdf_como_texto(service, file_id):
+    """Exporta el PDF como texto usando Drive export"""
+    try:
+        content = service.files().export(fileId=file_id, mimeType="text/plain").execute()
+        if isinstance(content, bytes):
+            return content.decode("utf-8", errors="ignore")
+        return str(content)
+    except Exception:
+        # Si no funciona export, intentar get_media
+        try:
+            import io as _io
+            from googleapiclient.http import MediaIoBaseDownload
+            request = service.files().get_media(fileId=file_id)
+            buf = _io.BytesIO()
+            dl = MediaIoBaseDownload(buf, request)
+            done = False
+            while not done:
+                _, done = dl.next_chunk()
+            return buf.getvalue().decode("utf-8", errors="ignore")
+        except Exception as e2:
+            return f"ERROR: {e2}"
+
 # ── Claude API ────────────────────────────────────────────────────
-def llamar_claude(prompt, api_key, max_tokens=4096):
+def claude_extraer_datos(api_key, hotel, fecha_display, texto_pdf):
+    """Le pasa el texto del PDF a Claude y pide los datos en formato CSV"""
+    
+    prompt = f"""Sos el asistente del dashboard hotelero GTH. 
+Extraé los datos del siguiente reporte K007 del hotel {hotel} del día {fecha_display}.
+
+TEXTO DEL PDF:
+{texto_pdf[:8000]}
+
+Respondé ÚNICAMENTE con una línea CSV con exactamente estos campos en este orden (sin encabezado, sin explicaciones, sin texto extra):
+Fecha,Hotel,Color,Hab,Manager,Dia_Ocup,Dia_ADR,Dia_RevPAR,Dia_Lleg,Dia_Sal,Dia_Rev,Dia_Rooms,Dia_AyB,Dia_Rev_AA,Dia_Rooms_AA,Dia_AyB_AA,Mes_Ocup,Mes_ADR,Mes_RevPAR,Mes_Lleg,Mes_Rev,Mes_Rooms,Mes_AyB,Mes_Rev_AA,Mes_Rooms_AA,Mes_AyB_AA,AA_Ocup,AA_ADR,AA_RevPAR
+
+Reglas:
+- Fecha: {fecha_display}
+- Hotel: {hotel}
+- Color: {HOTEL_INFO[hotel]['color']}
+- Hab: {HOTEL_INFO[hotel]['hab']}
+- Manager: nombre del manager que aparece en el reporte
+- Dia_Ocup: ocupación del día en % (número sin el símbolo %, ej: 36.89)
+- Dia_ADR: tarifa promedio del día SIN IVA en pesos (número entero)
+- Dia_RevPAR: revpar del día SIN IVA en pesos (número entero)
+- Dia_Lleg: llegadas del día (entero)
+- Dia_Sal: salidas del día (entero)
+- Dia_Rev: revenue total del día SIN IVA (número entero)
+- Dia_Rooms: revenue habitaciones del día SIN IVA (número entero)
+- Dia_AyB: revenue alimentos y bebidas del día SIN IVA (número entero)
+- Dia_Rev_AA, Dia_Rooms_AA, Dia_AyB_AA: mismos campos pero del año anterior
+- Mes_Ocup: ocupación acumulada del mes en % (número sin %)
+- Mes_ADR, Mes_RevPAR: acumulado del mes SIN IVA
+- Mes_Lleg: llegadas acumuladas del mes
+- Mes_Rev, Mes_Rooms, Mes_AyB: revenue acumulado del mes SIN IVA
+- Mes_Rev_AA, Mes_Rooms_AA, Mes_AyB_AA: mismos campos año anterior
+- AA_Ocup, AA_ADR, AA_RevPAR: datos del año anterior para comparativo
+- Si un valor no está disponible usar 0
+
+Ejemplo de formato esperado (solo UNA línea):
+{fecha_display},{hotel},{HOTEL_INFO[hotel]['color']},{HOTEL_INFO[hotel]['hab']},Nombre Manager,36.89,137874,50866,28,23,12913750,5239216,6344802,6885295,4749781,1990745,30.29,129176,39129,95,33996139,20151397,12004884,28484667,18375694,9464711,59.41,79163,47028"""
+
     url = "https://api.anthropic.com/v1/messages"
     headers = {
         "x-api-key": api_key,
@@ -58,77 +146,27 @@ def llamar_claude(prompt, api_key, max_tokens=4096):
         "content-type": "application/json"
     }
     body = {
-        "model": "claude-opus-4-5",
-        "max_tokens": max_tokens,
-        "tools": [{
-            "type": "computer_20241022",
-            "name": "computer",
-            "display_width_px": 1024,
-            "display_height_px": 768
-        }],
+        "model": "claude-haiku-4-5",
+        "max_tokens": 500,
         "messages": [{"role": "user", "content": prompt}]
     }
-    # Usar herramientas MCP de Drive via API
-    body_mcp = {
-        "model": "claude-opus-4-5",
-        "max_tokens": max_tokens,
-        "mcp_servers": [{
-            "type": "url",
-            "url": "https://drivemcp.googleapis.com/mcp/v1",
-            "name": "google-drive"
-        }],
-        "messages": [{"role": "user", "content": prompt}]
-    }
-    data = json.dumps(body_mcp).encode()
-    req = urllib.request.Request(url, data=data, headers=headers, method="POST")
-    with urllib.request.urlopen(req) as r:
-        return json.loads(r.read())
-
-def procesar_reportes_con_claude(api_key, fecha_objetivo, csv_existente):
-    """Llama a Claude para que lea los PDFs y devuelva las filas nuevas del CSV"""
-
-    prompt = f"""Sos el asistente del dashboard hotelero de GTH.
-
-TAREA: Leer los PDFs del Manager Report K007 del día {fecha_objetivo} de las 4 carpetas de Google Drive y extraer los datos.
-
-CARPETAS DE DRIVE (buscá el PDF que contenga '{fecha_objetivo.replace('/', '.')}' en el nombre):
-- HJ Plaza La Ribera: folder ID 1B3B4c69OE4ouLCU0b2CvdpHlz5CpYCsZ
-- Howard Johnson Cariló: folder ID 15xh9xe37h5lFrT03LVlfoXWIbfs41NJu  
-- Soho Park: folder ID 1ZFrp8rMQHltIX81uECZKFhqyMDF4pA3N
-- HJ Bahia Blanca: folder ID 1AAPKDiSib61wRj-rrzljQx-682F7Rczj
-
-Para cada hotel, extraé del PDF:
-- DÍA: Ocup%, ADR, RevPAR, Llegadas, Salidas, Revenue sin IVA, Rooms Revenue, AyB Revenue
-- DÍA AA (año anterior): los mismos campos de la columna año anterior
-- MES: Ocup%, ADR, RevPAR, Llegadas, Revenue sin IVA, Rooms Revenue, AyB Revenue  
-- MES AA: los mismos campos de la columna año anterior
-- Manager del hotel
-
-Si un hotel no tiene PDF del día {fecha_objetivo}, marcá sin_k007=true (Dia_Ocup=0, Dia_Rev=0).
-
-Respondé ÚNICAMENTE con las filas CSV nuevas en este formato exacto (sin encabezado, sin explicaciones):
-Fecha,Hotel,Color,Hab,Manager,Dia_Ocup,Dia_ADR,Dia_RevPAR,Dia_Lleg,Dia_Sal,Dia_Rev,Dia_Rooms,Dia_AyB,Dia_Rev_AA,Dia_Rooms_AA,Dia_AyB_AA,Mes_Ocup,Mes_ADR,Mes_RevPAR,Mes_Lleg,Mes_Rev,Mes_Rooms,Mes_AyB,Mes_Rev_AA,Mes_Rooms_AA,Mes_AyB_AA,AA_Ocup,AA_ADR,AA_RevPAR
-
-Colores y habitaciones:
-- HJ Plaza La Ribera: #378ADD, 104 hab
-- Howard Johnson Cariló: #1D9E75, 120 hab
-- Soho Park: #D85A30, 43 hab
-- HJ Bahia Blanca: #8B6914, 79 hab
-
-CSV EXISTENTE (para no duplicar fechas ya procesadas):
-{csv_existente[:500]}...
-"""
-
+    
+    req = urllib.request.Request(url, data=json.dumps(body).encode(), headers=headers, method="POST")
     try:
-        resp = llamar_claude(prompt, api_key)
-        # Extraer texto de la respuesta
-        texto = ""
-        for block in resp.get("content", []):
-            if block.get("type") == "text":
-                texto += block["text"]
-        return texto.strip()
+        with urllib.request.urlopen(req, timeout=30) as r:
+            resp = json.loads(r.read())
+            texto = resp["content"][0]["text"].strip()
+            # Tomar solo la primera línea que tenga comas (la línea CSV)
+            for linea in texto.split('\n'):
+                linea = linea.strip()
+                if linea.count(',') >= 20:
+                    return linea
+            return None
+    except urllib.error.HTTPError as e:
+        print(f"    Error Claude API: {e.code} {e.read().decode()[:200]}", flush=True)
+        return None
     except Exception as e:
-        print(f"  Error llamando a Claude API: {e}", flush=True)
+        print(f"    Error: {e}", flush=True)
         return None
 
 # ── Generar HTMLs ─────────────────────────────────────────────────
@@ -184,56 +222,98 @@ def build_ejecutivo(csv_data, logo_b64):
 if __name__ == "__main__":
     print("=== GTH Dashboard Generator ===", flush=True)
 
-    gh_token    = os.environ.get("GH_TOKEN", "")
-    api_key     = os.environ.get("ANTHROPIC_API_KEY", "")
-    logo_b64    = os.environ.get("LOGO_B64", "")
+    gh_token  = os.environ.get("GH_TOKEN", "")
+    api_key   = os.environ.get("ANTHROPIC_API_KEY", "")
+    logo_b64  = os.environ.get("LOGO_B64", "")
+    sa_json   = os.environ.get("GDRIVE_SERVICE_ACCOUNT_JSON", "")
 
     print(f"Logo: {'OK' if logo_b64 else 'sin logo'}", flush=True)
     print(f"API Key: {'OK' if api_key else 'FALTA'}", flush=True)
+    print(f"Drive SA: {'OK' if sa_json else 'FALTA'}", flush=True)
 
-    # Fecha objetivo: hoy - 1
+    # Fecha hoy-1
     ayer = datetime.date.today() - datetime.timedelta(days=1)
-    fecha_str = ayer.strftime("%d/%m/%Y")
+    fecha_str  = ayer.strftime("%d/%m/%Y")   # 06/06/2026
+    fecha_drive = ayer.strftime("%Y.%m.%d")  # 2026.06.06
     print(f"Procesando fecha: {fecha_str}", flush=True)
 
     # Leer CSV existente
     print("Leyendo datos.csv desde GitHub...", flush=True)
     try:
         csv_data, csv_sha = github_get("datos.csv", gh_token)
-        print(f"CSV existente: {len(csv_data.strip().split(chr(10)))-1} registros", flush=True)
+        registros = len(csv_data.strip().split('\n')) - 1
+        print(f"CSV existente: {registros} registros", flush=True)
     except Exception as e:
         print(f"Error leyendo datos.csv: {e}", flush=True)
         sys.exit(1)
 
-    # Verificar si ya tenemos datos de ayer
-    fecha_fmt = ayer.strftime("%d/%m/%Y")
-    if fecha_fmt in csv_data:
-        print(f"Fecha {fecha_fmt} ya existe en CSV — regenerando HTMLs con datos actuales", flush=True)
+    # Si ya tenemos la fecha, saltar procesamiento
+    if fecha_str in csv_data:
+        print(f"Fecha {fecha_str} ya existe — regenerando HTMLs", flush=True)
+    elif not sa_json or not api_key:
+        print(f"Faltan credenciales para procesar PDFs — usando CSV existente", flush=True)
     else:
-        # Llamar a Claude para procesar los PDFs
-        print(f"Llamando a Claude API para procesar PDFs del {fecha_fmt}...", flush=True)
-        filas_nuevas = procesar_reportes_con_claude(api_key, fecha_fmt, csv_data)
+        # Instalar dependencias de Drive
+        import subprocess
+        subprocess.run([sys.executable, "-m", "pip", "install", "-q",
+                       "google-auth", "google-auth-httplib2", "google-api-python-client"], check=True)
 
-        if filas_nuevas and len(filas_nuevas) > 10:
-            print(f"Claude devolvió {len(filas_nuevas.split(chr(10)))} filas nuevas", flush=True)
-            # Agregar filas nuevas al CSV
-            header = csv_data.strip().split('\n')[0]
-            csv_data = header + '\n' + filas_nuevas + '\n' + '\n'.join(csv_data.strip().split('\n')[1:])
-            # Subir CSV actualizado
-            print("Subiendo datos.csv actualizado...", flush=True)
-            github_put("datos.csv", csv_data.encode("utf-8"), gh_token, sha=csv_sha)
+        print(f"Conectando a Google Drive...", flush=True)
+        service = get_drive_service(sa_json)
+
+        filas_nuevas = []
+        header = csv_data.strip().split('\n')[0]
+
+        for hotel, folder_id in CARPETAS.items():
+            print(f"  Procesando {hotel}...", flush=True)
+
+            # Buscar PDF
+            pdf = buscar_pdf(service, folder_id, fecha_drive)
+            if not pdf:
+                print(f"    Sin PDF del {fecha_drive} — marcando sin_k007", flush=True)
+                # Buscar último PDF para obtener datos del mes
+                result = service.files().list(
+                    q=f"'{folder_id}' in parents and mimeType='application/pdf'",
+                    orderBy="name desc", pageSize=1, fields="files(id,name)"
+                ).execute()
+                ultimo = result.get("files", [{}])[0]
+                if ultimo:
+                    texto = exportar_pdf_como_texto(service, ultimo["id"])
+                else:
+                    texto = ""
+                # Para sin_k007 igualmente llamamos a Claude para extraer datos del mes
+            else:
+                print(f"    Leyendo {pdf['name']}...", flush=True)
+                texto = exportar_pdf_como_texto(service, pdf["id"])
+
+            if texto and len(texto) > 100:
+                print(f"    Texto extraído: {len(texto)} chars", flush=True)
+                fila = claude_extraer_datos(api_key, hotel, fecha_str, texto)
+                if fila and fila.count(',') >= 20:
+                    print(f"    ✅ Datos extraídos OK", flush=True)
+                    filas_nuevas.append(fila)
+                else:
+                    print(f"    ⚠️ Claude no devolvió datos válidos", flush=True)
+            else:
+                print(f"    ⚠️ Texto insuficiente del PDF", flush=True)
+
+        if filas_nuevas:
+            print(f"\n{len(filas_nuevas)} hoteles procesados — actualizando CSV...", flush=True)
+            lineas_existentes = csv_data.strip().split('\n')
+            csv_nuevo = header + '\n' + '\n'.join(filas_nuevas) + '\n' + '\n'.join(lineas_existentes[1:])
+            github_put("datos.csv", csv_nuevo.encode("utf-8"), gh_token, sha=csv_sha)
+            csv_data = csv_nuevo
         else:
-            print("Claude no devolvió datos válidos — usando CSV existente", flush=True)
+            print("Sin datos nuevos — usando CSV existente", flush=True)
 
-    # Generar HTMLs
-    print("Generando HTMLs...", flush=True)
+    # Generar y publicar HTMLs
+    print("\nGenerando HTMLs...", flush=True)
     html_dash = build_dashboard(csv_data, logo_b64)
     html_ejec = build_ejecutivo(csv_data, logo_b64)
     print(f"Dashboard: {len(html_dash):,} chars", flush=True)
     print(f"Ejecutivo: {len(html_ejec):,} chars", flush=True)
 
-    # Subir HTMLs
-    print("Subiendo HTMLs a GitHub...", flush=True)
+    print("Subiendo a GitHub...", flush=True)
     github_put("index.html",     html_dash.encode("utf-8"), gh_token, sha=get_sha("index.html", gh_token))
     github_put("ejecutivo.html", html_ejec.encode("utf-8"), gh_token, sha=get_sha("ejecutivo.html", gh_token))
 
