@@ -19,7 +19,7 @@ jobs:
 
       - name: Generar y publicar dashboard
         
-env:
+      -env:
           LOGO_B64: ${{ secrets.LOGO_B64 }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
