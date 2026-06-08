@@ -75,40 +75,28 @@ def buscar_pdf(service, folder_id, fecha_drive):
     return None
 
 def exportar_pdf_texto(service, file_id):
-    """Exporta PDF como texto plano via Drive API"""
+    """Descarga PDF y extrae texto con pdfminer"""
+    import io as _io
+    from googleapiclient.http import MediaIoBaseDownload
+    from pdfminer.high_level import extract_text
+    
+    # Descargar PDF binario
+    request = service.files().get_media(fileId=file_id)
+    buf = _io.BytesIO()
+    dl = MediaIoBaseDownload(buf, request)
+    done = False
+    while not done:
+        _, done = dl.next_chunk()
+    buf.seek(0)
+    
+    # Extraer texto con pdfminer
     try:
-        # Intentar export como texto (funciona para Google Docs)
-        content = service.files().export(fileId=file_id, mimeType="text/plain").execute()
-        if isinstance(content, bytes):
-            return content.decode("utf-8", errors="ignore")
-        return str(content)
-    except Exception:
-        pass
-    # Si no funciona, usar get_media (descarga el PDF binario) 
-    # y extraer texto con pdfminer
-    try:
-        import io as _io
-        from googleapiclient.http import MediaIoBaseDownload
-        request = service.files().get_media(fileId=file_id)
-        buf = _io.BytesIO()
-        dl = MediaIoBaseDownload(buf, request)
-        done = False
-        while not done:
-            _, done = dl.next_chunk()
-        # Extraer texto del PDF
-        try:
-            from pdfminer.high_level import extract_text_to_fp
-            from pdfminer.layout import LAParams
-            buf.seek(0)
-            out = _io.StringIO()
-            extract_text_to_fp(buf, out, laparams=LAParams(), output_type='text', codec='utf-8')
-            return out.getvalue()
-        except Exception:
-            # Fallback: retornar bytes decodificados
-            buf.seek(0)
-            return buf.read().decode("latin-1", errors="ignore")
+        texto = extract_text(buf)
+        return texto
     except Exception as e:
-        return f"ERROR: {e}"
+        # Fallback: decodificar bytes directamente
+        buf.seek(0)
+        return buf.read().decode("latin-1", errors="ignore")
 
 # ── Parseo del texto del PDF ──────────────────────────────────────
 def extraer_numero(texto, patron):
