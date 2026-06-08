@@ -2,7 +2,7 @@ name: GTH Dashboard · Deploy diario
 
 on:
   schedule:
-    - cron: '0 11 * * *'   # 08:00 hs Argentina (UTC-3)
+    - cron: '0 11 * * *'
   workflow_dispatch:
 
 jobs:
@@ -17,12 +17,12 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Instalar dependencias
+      - name: Install dependencies
         run: pip install anthropic
 
-      - name: Generar y publicar dashboard
+      - name: Generate and deploy
         env:
-          GH_TOKEN:            ${{ secrets.GH_TOKEN }}
-          LOGO_B64:            ${{ secrets.LOGO_B64 }}
-          ANTHROPIC_API_KEY:   ${{ secrets.ANTHROPIC_API_KEY }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          LOGO_B64: ${{ secrets.LOGO_B64 }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: python generate_dashboard.py
