@@ -61,7 +61,7 @@ def get_drive_service(sa_json):
     from googleapiclient.discovery import build
     creds = service_account.Credentials.from_service_account_info(
         json.loads(sa_json),
-        scopes=["https://www.googleapis.com/auth/drive.readonly"]
+        scopes=["https://www.googleapis.com/auth/drive"]
     )
     return build("drive", "v3", credentials=creds)
 
@@ -75,28 +75,61 @@ def buscar_pdf(service, folder_id, fecha_drive):
     return None
 
 def exportar_pdf_texto(service, file_id):
-    """Descarga PDF y extrae texto con pdfminer"""
+    """Extrae texto del PDF via Google Drive OCR"""
     import io as _io
     from googleapiclient.http import MediaIoBaseDownload
-    from pdfminer.high_level import extract_text
-    
-    # Descargar PDF binario
-    request = service.files().get_media(fileId=file_id)
-    buf = _io.BytesIO()
-    dl = MediaIoBaseDownload(buf, request)
-    done = False
-    while not done:
-        _, done = dl.next_chunk()
-    buf.seek(0)
-    
-    # Extraer texto con pdfminer
+    from googleapiclient.discovery import build as gdrive_build
+
+    # Método 1: Copiar PDF como Google Doc (Drive hace OCR automático)
     try:
-        texto = extract_text(buf)
+        # Crear copia como Google Doc para extraer texto
+        file_meta = {"name": "temp_ocr", "mimeType": "application/vnd.google-apps.document"}
+        copied = service.files().copy(
+            fileId=file_id,
+            body=file_meta,
+            fields="id"
+        ).execute()
+        doc_id = copied["id"]
+        
+        # Exportar el Google Doc como texto plano
+        texto_bytes = service.files().export(
+            fileId=doc_id,
+            mimeType="text/plain"
+        ).execute()
+        
+        # Borrar el doc temporal
+        try:
+            service.files().delete(fileId=doc_id).execute()
+        except:
+            pass
+        
+        if isinstance(texto_bytes, bytes):
+            texto = texto_bytes.decode("utf-8", errors="ignore")
+        else:
+            texto = str(texto_bytes)
+        
+        print(f"    OCR via Google Doc: {len(texto)} chars", flush=True)
         return texto
-    except Exception as e:
-        # Fallback: decodificar bytes directamente
+        
+    except Exception as e1:
+        print(f"    OCR falló: {e1} — usando get_media", flush=True)
+        
+    # Método 2: Descargar PDF y usar pdfminer
+    try:
+        request = service.files().get_media(fileId=file_id)
+        buf = _io.BytesIO()
+        dl = MediaIoBaseDownload(buf, request)
+        done = False
+        while not done:
+            _, done = dl.next_chunk()
         buf.seek(0)
-        return buf.read().decode("latin-1", errors="ignore")
+        from pdfminer.high_level import extract_text
+        texto = extract_text(buf)
+        print(f"    pdfminer: {len(texto)} chars", flush=True)
+        return texto
+    except Exception as e2:
+        print(f"    pdfminer falló: {e2}", flush=True)
+        return ""
 
 # ── Parseo del texto del PDF ──────────────────────────────────────
 def extraer_numero(texto, patron):
@@ -314,6 +347,7 @@ if __name__ == "__main__":
                 continue
 
             print(f"    Texto: {len(texto)} chars — parseando...", flush=True)
+            print(f"    Muestra: {repr(texto[:300])}", flush=True)
             fila = extraer_fila_k007(texto, hotel, fecha_str)
             campos = fila.split(',')
             print(f"    Ocup: {campos[5]}% | ADR: {campos[6]} | Rev: {campos[10]}", flush=True)
