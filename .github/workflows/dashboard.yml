@@ -1,42 +1,29 @@
-name: GTH Dashboard · Deploy diario
-
+name: GTH Dashboard Deploy
+ 
 on:
   schedule:
-    - cron: '0 11 * * *'
+    - cron: '30 12 * * *'
   workflow_dispatch:
-
+ 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GH_TOKEN }}
-          fetch-depth: 0
-
+ 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
-      - name: Instalar dependencias
-        run: pip install google-auth google-auth-httplib2 google-api-python-client
-
-      - name: Generar dashboard
+ 
+      - name: Install dependencies
+        run: pip install google-auth google-auth-httplib2 google-api-python-client pdfminer.six anthropic
+ 
+      - name: Generate and deploy
         env:
-          GDRIVE_SERVICE_ACCOUNT_JSON: ${{ secrets.GDRIVE_SERVICE_ACCOUNT_JSON }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
           LOGO_B64: ${{ secrets.LOGO_B64 }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GDRIVE_SERVICE_ACCOUNT_JSON: ${{ secrets.GDRIVE_SERVICE_ACCOUNT_JSON }}
         run: python generate_dashboard.py
-
-      - name: Commit y push
-        run: |
-          git config --global user.name "GTH Bot"
-          git config --global user.email "bot@gth.com.ar"
-
-          git add .
-
-          git diff --staged --quiet || git commit -m "Dashboard update $(date '+%Y-%m-%d %H:%M')"
-
-          git push
