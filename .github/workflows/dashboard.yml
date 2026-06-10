@@ -18,7 +18,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install anthropic
+        run: pip install google-auth google-auth-httplib2 google-api-python-client pdfminer.six anthropic
 
       - name: Generate and deploy
         env:
