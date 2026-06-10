@@ -2,7 +2,7 @@ name: GTH Dashboard · Deploy diario
 
 on:
   schedule:
-    - cron: '0 13 * * *'
+    - cron: '30 12 * * *'
   workflow_dispatch:
 
 jobs:
