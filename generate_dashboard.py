@@ -79,7 +79,6 @@ def exportar_pdf_texto(service, file_id):
         from pdfminer.high_level import extract_text
         from pdfminer.layout import LAParams
         buf.seek(0)
-        # LAParams ajustado para Crystal Reports
         params = LAParams(line_margin=2.0, word_margin=0.3, char_margin=3.0, boxes_flow=None)
         texto = extract_text(buf, laparams=params)
         return texto
@@ -88,51 +87,67 @@ def exportar_pdf_texto(service, file_id):
         buf.seek(0)
         return buf.read().decode("latin-1", errors="ignore")
 
+def extraer_house_use_dia(texto):
+    """Extrae House Use del día (primera columna = Dia)"""
+    # Busca 'House Use' seguido de números: primer número = Dia
+    m = re.search(r'House Use\s+(\d+)', texto)
+    if m:
+        return int(m.group(1))
+    # Formato BBA: número antes del label
+    m = re.search(r'(\d+)\nHouse Use', texto)
+    if m:
+        return int(m.group(1))
+    return 0
+
+def extraer_hab_ocupadas_dia(texto):
+    """Extrae Habitaciones Ocupadas del día (primera columna = Dia)"""
+    m = re.search(r'Habitaciones Ocupadas\s+(\d+)', texto)
+    if m:
+        return int(m.group(1))
+    # Formato BBA
+    m = re.search(r'(\d+)\nHabitaciones Ocupadas', texto)
+    if m:
+        return int(m.group(1))
+    return 0
+
+def calcular_ocup_gth(hab_ocup, house_use, hab_total):
+    """Ocupación GTH = (Hab Ocupadas - House Use) / Hab Totales * 100"""
+    if hab_total <= 0:
+        return 0.0
+    netas = max(0, hab_ocup - house_use)
+    return round(netas / hab_total * 100, 2)
+
 def nums_de_seccion(texto, seccion):
-    """Extrae lista de números de una sección del PDF"""
-    # Buscar la sección
     patron = rf'\b{seccion}\b\s*([\s\S]+?)(?:\b(?:Dia|Mes|A[ñn]o|Totales|Manager)\b|$)'
     m = re.search(patron, texto, re.IGNORECASE)
     if not m:
         return []
     raw = m.group(1)
-    # Extraer todos los números
     return re.findall(r'\d{1,3}(?:[,.]\d{3})*(?:\.\d+)?', raw)
 
 def limpiar(s):
-    """Convierte string de número a int"""
-    try:
-        return int(float(str(s).replace(',','')))
-    except:
-        return 0
+    try: return int(float(str(s).replace(',','')))
+    except: return 0
 
 def limpiar_f(s):
-    """Convierte string de número a float"""
-    try:
-        return float(str(s).replace(',',''))
-    except:
-        return 0.0
+    try: return float(str(s).replace(',',''))
+    except: return 0.0
 
 def es_formato_bba(texto):
-    """BBA pdfminer tiene números ANTES de los labels: '7.69\nPorcentaje de Ocupación'"""
     return bool(re.search(r'[\d\.]+\nPorcentaje de Ocupaci', texto))
 
 def extraer_fila_bba(texto, hotel, fecha_display):
-    """Parser para BBA — números antes de labels en sección Dia."""
     info = HOTEL_INFO[hotel]
 
-    # Manager al principio (BBA lo pone al inicio en pdfminer)
     manager = "Sin datos"
     mgr_m = re.match(r'^([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+){1,2})\s*\n', texto.strip())
     if mgr_m:
         manager = mgr_m.group(1)
 
     def vbl(label):
-        """Valor antes del label"""
         m = re.search(r'([\d,\.]+)\n' + re.escape(label), texto)
         return float(m.group(1).replace(',','')) if m else 0.0
 
-    # Sección Mes (vertical normal)
     def get_sec(label, terminators):
         le = re.escape(label)
         pat = rf'\b{le}\b\s*\n([\s\S]+?)(?=\n\s*(?:{terminators}|\Z))'
@@ -158,7 +173,6 @@ def extraer_fila_bba(texto, hotel, fecha_display):
             except: pass
         return 32
 
-    # Datos del día — por valor antes del label
     dia_ocup  = vbl('Porcentaje de Ocupación')
     dia_lleg  = int(vbl('Cantidad de Llegadas'))
     dia_sal   = int(vbl('Cantidad de Salidas'))
@@ -168,11 +182,15 @@ def extraer_fila_bba(texto, hotel, fecha_display):
     dia_ayb   = int(float(dia_ayb_m.group(1).replace(',',''))) if dia_ayb_m else 0
     dia_rev_m = re.search(r'([\d,]+)\nHotel Revenue\n', texto)
     dia_rev   = int(float(dia_rev_m.group(1).replace(',',''))) if dia_rev_m else 0
-    # REVPAR
     rp_m = re.search(r'REVPAR\n([\d,]+)', texto)
     dia_rp = int(float(rp_m.group(1).replace(',',''))) if rp_m else 0
 
-    # Datos del mes — de la sección Mes vertical
+    # Extraer hab ocupadas y house use para cálculo GTH
+    hab_ocup  = extraer_hab_ocupadas_dia(texto)
+    house_use = extraer_house_use_dia(texto)
+    ocup_gth  = calcular_ocup_gth(hab_ocup, house_use, info['hab'])
+    print(f"    GTH Ocup: ({hab_ocup} hab - {house_use} HU) / {info['hab']} = {ocup_gth}%", flush=True)
+
     if mes_sec and len(mes_sec) > 35:
         s = find_adr_idx(mes_sec)
         mes_ocup  = nf(mes_sec, 7)
@@ -193,21 +211,17 @@ def extraer_fila_bba(texto, hotel, fecha_display):
         f"{mes_ocup},{mes_adr},{mes_rp},{mes_lleg},"
         f"{mes_rev},{mes_rooms},{mes_ayb},"
         f"0,0,0,"
-        f"0.0,0,0"
+        f"0.0,0,0,"
+        f"{ocup_gth},{hab_ocup},{house_use}"
     )
 
 
 def extraer_fila_k007(texto, hotel, fecha_display):
-    """Parser K007 — detecta formato BBA automáticamente."""
-    # BBA tiene formato horizontal en el snippet de Drive
-    # pero pdfminer lo extrae con secciones verticales mezcladas
-    # Detectar por presencia de datos numéricos junto al label "Porcentaje de Ocupación"
     if hotel == "HJ Bahia Blanca" or es_formato_bba(texto):
         return extraer_fila_bba(texto, hotel, fecha_display)
 
     info = HOTEL_INFO[hotel]
 
-    # Manager — al principio (PLR/HJC/Soho)
     manager = "Sin datos"
     pat_manager = re.compile(r'^[A-ZÁÉÍÓÚÑ][a-záéíóúñ]{2,9} [A-ZÁÉÍÓÚÑ][a-záéíóúñ]{2,9}$')
     lineas = texto.strip().split("\n")
@@ -275,6 +289,12 @@ def extraer_fila_k007(texto, hotel, fecha_display):
     mes_ocup = nf(mes,   7); mes_lleg = ni(mes,  9)
     aa_ocup  = nf(dia_aa, 7) if dia_aa else 0.0
 
+    # Extraer hab ocupadas y house use para cálculo GTH
+    hab_ocup  = extraer_hab_ocupadas_dia(texto)
+    house_use = extraer_house_use_dia(texto)
+    ocup_gth  = calcular_ocup_gth(hab_ocup, house_use, info['hab'])
+    print(f"    GTH Ocup: ({hab_ocup} hab - {house_use} HU) / {info['hab']} = {ocup_gth}%", flush=True)
+
     return (
         f"{fecha_display},{hotel},{info['color']},{info['hab']},{manager},"
         f"{dia_ocup},{d['adr']},{d['rp']},{dia_lleg},{dia_sal},"
@@ -283,11 +303,11 @@ def extraer_fila_k007(texto, hotel, fecha_display):
         f"{mes_ocup},{m['adr']},{m['rp']},{mes_lleg},"
         f"{m['rev']},{m['rooms']},{m['ayb']},"
         f"{maa['rev']},{maa['rooms']},{maa['ayb']},"
-        f"{aa_ocup},{aa['adr']},{aa['rp']}"
+        f"{aa_ocup},{aa['adr']},{aa['rp']},"
+        f"{ocup_gth},{hab_ocup},{house_use}"
     )
 
 def claude_completar_datos(api_key, hotel, fecha, texto_pdf, datos_parciales):
-    """Usa Claude API para extraer datos del PDF incluso con texto parcial"""
     url = "https://api.anthropic.com/v1/messages"
     headers = {
         "x-api-key": api_key,
@@ -305,14 +325,15 @@ TEXTO DEL PDF:
 
 Datos que ya pude extraer: {datos_parciales}
 
-Respondé SOLO con una línea CSV con exactamente estos 29 campos (sin encabezado ni texto adicional):
-{fecha},{hotel},{info['color']},{info['hab']},[Manager],[Dia_Ocup%],[Dia_ADR],[Dia_RevPAR],[Dia_Llegadas],[Dia_Salidas],[Dia_Revenue],[Dia_Rooms],[Dia_AyB],[Dia_Rev_AA],[Dia_Rooms_AA],[Dia_AyB_AA],[Mes_Ocup%],[Mes_ADR],[Mes_RevPAR],[Mes_Llegadas],[Mes_Revenue],[Mes_Rooms],[Mes_AyB],[Mes_Rev_AA],[Mes_Rooms_AA],[Mes_AyB_AA],[AA_Ocup%],[AA_ADR],[AA_RevPAR]
+Respondé SOLO con una línea CSV con exactamente estos 32 campos (sin encabezado ni texto adicional):
+{fecha},{hotel},{info['color']},{info['hab']},[Manager],[Dia_Ocup%],[Dia_ADR],[Dia_RevPAR],[Dia_Llegadas],[Dia_Salidas],[Dia_Revenue],[Dia_Rooms],[Dia_AyB],[Dia_Rev_AA],[Dia_Rooms_AA],[Dia_AyB_AA],[Mes_Ocup%],[Mes_ADR],[Mes_RevPAR],[Mes_Llegadas],[Mes_Revenue],[Mes_Rooms],[Mes_AyB],[Mes_Rev_AA],[Mes_Rooms_AA],[Mes_AyB_AA],[AA_Ocup%],[AA_ADR],[AA_RevPAR],[Ocup_GTH%],[Hab_Ocupadas],[House_Use]
 
 Reglas:
 - Revenue SIN IVA (buscar "Hotel Revenue" sin "C/IVA")
 - Ocup% sin el símbolo (ej: 37.21)
 - Revenue en pesos enteros (ej: 2500000)
 - Columnas del PDF: Dia | Mes | Año | Dia AA | Mes AA | Año AA
+- Ocup_GTH% = (Hab_Ocupadas - House_Use) / Hab_Totales_Hotel * 100
 - Si un dato no aparece en el texto usar 0
 - Manager: nombre que aparece en el reporte"""
 
@@ -347,7 +368,11 @@ def build_dashboard(csv_data, logo_b64):
         f, h = r['Fecha'], r['Hotel']
         by_date[f][h] = {
             "hotel":h,"color":r['Color'],"hab":int(n(r['Hab'])),"manager":r['Manager'],
-            "d_ocup":n(r['Dia_Ocup']),"d_adr":n(r['Dia_ADR']),"d_revpar":n(r['Dia_RevPAR']),
+            "d_ocup":n(r.get('Ocup_GTH', r['Dia_Ocup'])),   # USA OCUP GTH si existe
+            "d_ocup_arion":n(r['Dia_Ocup']),                 # Ocup original de Arion
+            "d_hab_ocup":int(n(r.get('Hab_Ocupadas', 0))),
+            "d_house_use":int(n(r.get('House_Use', 0))),
+            "d_adr":n(r['Dia_ADR']),"d_revpar":n(r['Dia_RevPAR']),
             "d_lleg":int(n(r['Dia_Lleg'])),"d_sal":int(n(r['Dia_Sal'])),
             "d_rev":n(r['Dia_Rev']),"d_rooms":n(r['Dia_Rooms']),"d_ayb":n(r['Dia_AyB']),
             "d_rev_aa":n(r['Dia_Rev_AA']),"d_rooms_aa":n(r['Dia_Rooms_AA']),"d_ayb_aa":n(r['Dia_AyB_AA']),
@@ -409,6 +434,10 @@ if __name__ == "__main__":
         filas_nuevas = []
         header = csv_data.strip().split('\n')[0]
 
+        # Actualizar header si no tiene los nuevos campos
+        if 'Ocup_GTH' not in header:
+            header = header + ',Ocup_GTH,Hab_Ocupadas,House_Use'
+
         for hotel, folder_id in CARPETAS.items():
             print(f"  {hotel}...", flush=True)
             pdf = buscar_pdf(service, folder_id, fecha_drive)
@@ -424,9 +453,8 @@ if __name__ == "__main__":
             print(f"    FULL TEXT: {repr(texto[:3000])}", flush=True)
             fila = extraer_fila_k007(texto, hotel, fecha_str)
             campos = fila.split(',')
-            print(f"    Parser: Ocup={campos[5]}% ADR={campos[6]} Rev={campos[10]}", flush=True)
+            print(f"    Parser: Ocup={campos[5]}% ADR={campos[6]} Rev={campos[10]} OcupGTH={campos[29]}%", flush=True)
             
-            # Si ADR o Revenue son 0, usar Claude para completar
             api_key = os.environ.get("ANTHROPIC_API_KEY","")
             if api_key and (campos[6] == '0' or campos[10] == '0'):
                 print(f"    Completando con Claude API...", flush=True)
@@ -442,7 +470,6 @@ if __name__ == "__main__":
         if filas_nuevas:
             print(f"{len(filas_nuevas)} hoteles OK — actualizando CSV", flush=True)
             lineas = csv_data.strip().split('\n')
-            # Eliminar filas existentes de esta fecha (para pisar con datos nuevos)
             lineas_sin_fecha = [l for l in lineas[1:] if not l.startswith(fecha_str + ',')]
             eliminadas = len(lineas[1:]) - len(lineas_sin_fecha)
             if eliminadas:
