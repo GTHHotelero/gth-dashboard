@@ -26,9 +26,9 @@ jobs:
 
       - name: Generate E/R Dashboard
         env:
-          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+          GDRIVE_SERVICE_ACCOUNT_JSON: ${{ secrets.GDRIVE_SERVICE_ACCOUNT_JSON }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ER_EXCEL_FILE_ID: ${{ secrets.ER_EXCEL_FILE_ID }}
+          ER_EXCEL_FILE_ID: 1giqR1a-KE6PD-WtrkR70uiuTDjWVRDsV
         run: python er_generator.py
 
       - name: Commit if changed
