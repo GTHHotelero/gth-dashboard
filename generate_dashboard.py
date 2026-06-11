@@ -419,6 +419,10 @@ def build_html(csv_data, logo_b64):
     with open("template_dashboard.html", encoding="utf-8") as f_t:
         html = f_t.read()
 
+    # Inyectar logo
+    if logo_b64:
+        html = html.replace('LOGO_PLACEHOLDER', logo_b64)
+
     # Inyectar datos operativos
     html = replace_const(html, 'DB',      DB_JSON)
     html = replace_const(html, 'FECHAS',  FECHAS_JSON)
