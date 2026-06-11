@@ -12,8 +12,6 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.GH_TOKEN }}
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -24,18 +22,9 @@ jobs:
         run: |
           pip install pandas openpyxl numpy google-auth google-api-python-client requests
 
-      - name: Generate E/R Dashboard
+      - name: Generate and upload E/R Dashboard
         env:
           GDRIVE_SERVICE_ACCOUNT_JSON: ${{ secrets.GDRIVE_SERVICE_ACCOUNT_JSON }}
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           ER_EXCEL_FILE_ID: 1giqR1a-KE6PD-WtrkR70uiuTDjWVRDsV
         run: python er_generator.py
-
-      - name: Commit if changed
-        run: |
-          git config user.name "GTH Bot"
-          git config user.email "bot@gth.com"
-          git remote set-url origin https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/GTHHotelero/gth-dashboard.git
-          git add GTH_ER_Dashboard.html
-          git diff --cached --quiet || git commit -m "Auto-update E/R Dashboard $(date +'%Y-%m-%d')"
-          git push
