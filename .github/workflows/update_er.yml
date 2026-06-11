@@ -1,0 +1,40 @@
+name: Update E/R Dashboard
+
+on:
+  # Manual trigger
+  workflow_dispatch:
+  # Auto: 1st of every month at 9am Argentina time (12:00 UTC)
+  schedule:
+    - cron: '0 12 1 * *'
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install pandas openpyxl numpy google-auth google-api-python-client requests
+
+      - name: Generate E/R Dashboard
+        env:
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ER_EXCEL_FILE_ID: ${{ secrets.ER_EXCEL_FILE_ID }}
+        run: python er_generator.py
+
+      - name: Commit if changed
+        run: |
+          git config user.name "GTH Bot"
+          git config user.email "bot@gth.com"
+          git add GTH_ER_Dashboard.html
+          git diff --cached --quiet || git commit -m "Auto-update E/R Dashboard $(date +'%Y-%m-%d')"
+          git push
