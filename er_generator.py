@@ -12,11 +12,11 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 import io, requests
 
-# ── CONFIG ──
+# ââ CONFIG ââ
 FILE_ID = os.environ.get('ER_EXCEL_FILE_ID', '1giqR1a-KE6PD-WtrkR70uiuTDjWVRDsV')
 OUTPUT_HTML = 'GTH_ER_Dashboard.html'
 
-# ── GOOGLE DRIVE AUTH ──
+# ââ GOOGLE DRIVE AUTH ââ
 def get_drive_service():
     creds_json = os.environ.get('GDRIVE_SERVICE_ACCOUNT_JSON') or os.environ.get('GOOGLE_CREDENTIALS_JSON')
     if not creds_json:
@@ -39,7 +39,7 @@ def download_excel(file_id):
     buf.seek(0)
     return buf
 
-# ── DATA EXTRACTION ──
+# ââ DATA EXTRACTION ââ
 MONTHS_ORDER = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
                 'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
 MONTHS_UPPER = [m.upper() for m in MONTHS_ORDER]
@@ -97,7 +97,7 @@ def gv_cell(df, ridx, ci, is_pct=False):
     if isinstance(v, float) and np.isnan(v): return 0.0
     if isinstance(v, str):
         s = v.replace(',','').replace('%','').strip()
-        if s in ('','#¡DIV/0!','#DIV/0!'): return 0.0
+        if s in ('','#Â¡DIV/0!','#DIV/0!'): return 0.0
         try: f = float(s)
         except: return 0.0
     else:
@@ -124,7 +124,7 @@ ER_LABELS = {
 HAB_LABELS = {
     'hab_dis':  'Habitaciones disponibles',
     'hab_occ':  'Habitaciones ocupadas',
-    'occ_pct':  ['%  ocupación', '% ocupación'],
+    'occ_pct':  ['%  ocupaciÃ³n', '% ocupaciÃ³n'],
     'adr':      'Tarifa promedio',
 }
 
@@ -183,7 +183,7 @@ def process_excel(buf):
     # Sheet configs: name -> (hotel_name, er_month_row, er_year_row, hab_month_row, hab_year_row)
     SHEET_CONFIG = {
         'HJ RESISTENCIA': ('Howard Johnson La Ribera', 5, 6, None, None),
-        'HJ CARILO':      ('Howard Johnson Cariló',   210, 211, 5, 6),
+        'HJ CARILO':      ('Howard Johnson CarilÃ³',   210, 211, 5, 6),
         'SOHO':           ('Soho Suites',              70, 71, 5, 6),
     }
 
@@ -194,7 +194,7 @@ def process_excel(buf):
         hotel_name, emr, eyr, hmr, hyr = SHEET_CONFIG[sheet]
         print(f"  Processing {sheet} -> {hotel_name}")
         df = pd.read_excel(buf, sheet_name=sheet, header=None)
-        key = hotel_name.replace('Howard Johnson ', 'HJ ').replace('Cariló','Cariló')
+        key = hotel_name.replace('Howard Johnson ', 'HJ ').replace('CarilÃ³','CarilÃ³')
         hotels[key] = extract_hotel(df, hotel_name, emr, eyr, hmr, hyr)
         for y, yd in hotels[key]['years'].items():
             a = yd['annual']; vt = a['v_total']
@@ -203,7 +203,7 @@ def process_excel(buf):
 
     return hotels
 
-# ── HTML GENERATION ──
+# ââ HTML GENERATION ââ
 def generate_html(hotels, logo_b64=None):
     hotels_js = json.dumps(hotels, ensure_ascii=False)
     logo_src = f"data:image/svg+xml;base64,{logo_b64}" if logo_b64 else ""
@@ -217,9 +217,9 @@ def generate_html(hotels, logo_b64=None):
     html = html.replace('__LOGO_SRC__', logo_src)
     return html
 
-# ── GITHUB UPLOAD ──
+# ââ GITHUB UPLOAD ââ
 def upload_to_github(html_content, filename=OUTPUT_HTML):
-    token = os.environ.get('GITHUB_TOKEN')
+    token = os.environ.get('GTH_TOKEN') or os.environ.get('GITHUB_TOKEN')
     repo  = os.environ.get('GITHUB_REPOSITORY', 'GTHHotelero/gth-dashboard')
 
     api_url = f"https://api.github.com/repos/{repo}/contents/{filename}"
@@ -243,12 +243,12 @@ def upload_to_github(html_content, filename=OUTPUT_HTML):
 
     r = requests.put(api_url, headers=headers, json=payload)
     if r.status_code in (200, 201):
-        print(f"✓ {filename} uploaded successfully")
+        print(f"â {filename} uploaded successfully")
     else:
-        print(f"✗ Upload failed: {r.status_code} {r.text[:200]}")
+        print(f"â Upload failed: {r.status_code} {r.text[:200]}")
         sys.exit(1)
 
-# ── MAIN ──
+# ââ MAIN ââ
 if __name__ == '__main__':
     print("GTH E/R Dashboard Generator")
     print(f"Downloading Excel from Drive (file_id={FILE_ID})...")
