@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>GTH · E/R Hotelero</title>
+<style>
+:root {
+  --gold: #9E8E5A; --gold-light: #C4B07A; --dark: #1A1A2E;
+  --grey: #6B6B80; --light: #F4F4F8; --white: #FFFFFF;
+  --border: #E2E2EC; --green: #27AE60; --red: #E74C3C;
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background:var(--light); color:var(--dark); min-height:100vh; overflow-x:hidden; }
+
+.hdr { background:var(--dark); border-bottom:3px solid var(--gold); padding:12px 16px 10px; }
+.hdr-top { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.hdr-logo { height:40px; object-fit:contain; }
+.hdr-right { text-align:right; }
+.hdr-label { font-size:9px; letter-spacing:1.5px; color:var(--gold); text-transform:uppercase; font-weight:700; }
+.hdr-hotel { font-size:11px; color:rgba(255,255,255,0.45); margin-top:3px; }
+.hdr-sub { font-size:9px; letter-spacing:1.2px; color:rgba(158,142,90,0.5); text-transform:uppercase; margin-top:8px; font-weight:600; }
+
+.hotel-bar { background:var(--dark); border-bottom:1px solid rgba(158,142,90,0.2); padding:10px 16px 12px; }
+.bar-lbl { font-size:9px; letter-spacing:2px; color:var(--gold); text-transform:uppercase; font-weight:700; margin-bottom:8px; }
+.chips { display:flex; gap:7px; overflow-x:auto; scrollbar-width:none; }
+.chips::-webkit-scrollbar { display:none; }
+.chip { padding:7px 13px; border:1.5px solid rgba(158,142,90,0.35); background:transparent; color:rgba(255,255,255,0.55); font-size:11px; font-weight:600; border-radius:6px; cursor:pointer; font-family:inherit; transition:all .15s; white-space:nowrap; }
+.chip.active { background:var(--gold); border-color:var(--gold); color:var(--dark); }
+
+.period-bar { background:var(--white); border-bottom:1px solid var(--border); }
+.period-top { display:flex; border-bottom:1px solid var(--border); }
+.period-mode { flex:1; padding:10px 8px; font-size:11px; font-weight:700; color:var(--grey); cursor:pointer; border-bottom:2px solid transparent; text-align:center; transition:all .15s; }
+.period-mode.active { color:var(--dark); border-bottom-color:var(--dark); }
+.year-row { padding:0 16px; overflow-x:auto; white-space:nowrap; scrollbar-width:none; display:flex; }
+.year-row::-webkit-scrollbar { display:none; }
+.yr-tab { display:inline-block; padding:10px 16px; font-size:12px; font-weight:600; color:var(--grey); cursor:pointer; border-bottom:2px solid transparent; transition:all .15s; }
+.yr-tab.active { color:var(--gold); border-bottom-color:var(--gold); }
+.month-row { display:none; padding:8px 16px; gap:6px; overflow-x:auto; scrollbar-width:none; }
+.month-row::-webkit-scrollbar { display:none; }
+.month-row.visible { display:flex; }
+.mo-tab { flex-shrink:0; padding:5px 10px; font-size:11px; font-weight:600; color:var(--grey); cursor:pointer; border:1.5px solid var(--border); border-radius:5px; transition:all .15s; background:transparent; }
+.mo-tab.active { background:var(--gold); border-color:var(--gold); color:var(--dark); }
+.mo-tab.disabled { opacity:0.3; pointer-events:none; }
+
+.view-wrap { background:var(--white); border-bottom:1px solid var(--border); display:flex; }
+.vt { flex:1; padding:9px 4px; font-size:10px; font-weight:700; color:var(--grey); cursor:pointer; border-bottom:2px solid transparent; text-align:center; letter-spacing:.5px; text-transform:uppercase; transition:all .15s; }
+.vt.active { color:var(--dark); border-bottom-color:var(--dark); }
+
+.kpis { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:14px 16px 4px; }
+.kpi { background:var(--white); border-radius:10px; border:1px solid var(--border); padding:14px 14px 12px; position:relative; overflow:hidden; }
+.kpi::after { content:''; position:absolute; top:0; left:0; width:100%; height:3px; background:var(--gold); }
+.kpi.dark { background:var(--dark); border-color:transparent; }
+.kpi.dark::after { background:var(--gold-light); }
+.kpi.full { grid-column:1/-1; }
+.kpi-lbl { font-size:9px; letter-spacing:1.5px; color:var(--grey); text-transform:uppercase; font-weight:600; margin-bottom:6px; }
+.kpi.dark .kpi-lbl { color:rgba(255,255,255,.4); }
+.kpi-val { font-size:21px; font-weight:700; color:var(--dark); line-height:1; }
+.kpi.dark .kpi-val { color:var(--gold); }
+.kpi-sub { font-size:10px; color:var(--grey); margin-top:4px; }
+.kpi.dark .kpi-sub { color:rgba(255,255,255,.35); }
+.badge { display:inline-block; font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px; margin-top:5px; }
+.badge-up { background:rgba(39,174,96,.12); color:var(--green); }
+.badge-down { background:rgba(231,76,60,.12); color:var(--red); }
+
+.stats-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; padding:10px 16px 14px; }
+.stat { background:var(--white); border:1px solid var(--border); border-radius:8px; padding:10px 12px; text-align:center; }
+.stat-lbl { font-size:9px; letter-spacing:1px; color:var(--grey); text-transform:uppercase; font-weight:600; margin-bottom:4px; }
+.stat-val { font-size:15px; font-weight:700; color:var(--dark); }
+
+.pl-wrap { margin:0 16px 16px; background:var(--white); border-radius:10px; border:1px solid var(--border); overflow:hidden; }
+.pl-head { background:var(--dark); padding:12px 16px; }
+.pl-head h2 { font-size:11px; font-weight:700; color:var(--white); letter-spacing:.5px; text-transform:uppercase; }
+.pl-head p { font-size:10px; color:var(--gold); margin-top:3px; }
+table.pl { width:100%; border-collapse:collapse; font-size:12px; }
+.pl thead th { background:var(--gold); padding:8px 12px; font-size:9px; font-weight:700; color:var(--dark); text-transform:uppercase; letter-spacing:.5px; text-align:right; }
+.pl thead th:first-child { text-align:left; width:54%; }
+.pl tbody tr { border-bottom:1px solid var(--border); }
+.pl tbody tr:last-child { border-bottom:none; }
+.pl tbody td { padding:8px 12px; text-align:right; font-size:12px; color:var(--dark); }
+.pl tbody td:first-child { text-align:left; }
+.pl tbody tr:hover td { background:#F9F9FD; }
+tr.sec-hdr td { background:#EBEBF5; font-size:8px; font-weight:800; letter-spacing:2px; text-transform:uppercase; color:var(--grey); padding:6px 12px; border-top:2px solid var(--border); }
+tr.line-sub td { font-weight:700; background:#F5F5FA; border-top:1px solid #D0D0E0; }
+tr.gop-row td { font-weight:800; background:var(--dark); color:var(--gold) !important; font-size:13px; }
+tr.gop-row td.pct { color:rgba(196,176,122,0.7) !important; font-size:10px; }
+tr.ut-op-row td { font-weight:700; background:#0d2137; color:#7ac8e3 !important; font-size:12px; }
+tr.ut-op-row td.pct { color:rgba(122,200,227,0.6) !important; font-size:10px; }
+tr.total-row td { font-weight:800; background:#0a3020; color:#3db87a !important; font-size:13px; }
+tr.total-row.neg td { background:#3d0a0a; color:#e05656 !important; }
+tr.total-row td.pct { font-size:10px; opacity:0.7; }
+.ind { padding-left:22px !important; color:var(--grey) !important; font-size:11px !important; }
+.red { color:var(--red) !important; }
+.pct { color:var(--grey); font-size:10px; }
+
+.mt-wrap { margin:0 16px 16px; background:var(--white); border-radius:10px; border:1px solid var(--border); overflow:hidden; }
+.mt-scroll { overflow-x:auto; }
+.mt-scroll::-webkit-scrollbar { height:3px; }
+.mt-scroll::-webkit-scrollbar-thumb { background:var(--border); }
+table.mt { width:100%; border-collapse:collapse; font-size:11px; min-width:520px; }
+.mt thead th { background:var(--dark); padding:9px 10px; font-size:9px; font-weight:700; color:rgba(255,255,255,.6); text-transform:uppercase; letter-spacing:.5px; text-align:right; white-space:nowrap; }
+.mt thead th:first-child { text-align:left; color:var(--gold); position:sticky; left:0; background:var(--dark); min-width:90px; }
+.mt tbody td { padding:8px 10px; text-align:right; border-bottom:1px solid var(--border); white-space:nowrap; color:var(--dark); }
+.mt tbody td:first-child { text-align:left; font-weight:700; position:sticky; left:0; background:var(--white); }
+.mt tbody tr:nth-child(even) td { background:#FAFAFA; }
+.mt tbody tr:nth-child(even) td:first-child { background:#FAFAFA; }
+.mt .mpos { color:var(--green); font-weight:700; }
+.mt .mneg { color:var(--red); font-weight:700; }
+.occ-b { display:inline-flex; align-items:center; gap:3px; }
+.occ-bg { width:30px; height:4px; background:#E2E2EC; border-radius:2px; display:inline-block; overflow:hidden; }
+.occ-fill { height:4px; background:var(--gold); display:block; border-radius:2px; }
+
+.at-scroll { overflow-x:auto; }
+.at-scroll::-webkit-scrollbar { height:3px; }
+.at-scroll::-webkit-scrollbar-thumb { background:var(--border); }
+table.at { width:100%; border-collapse:collapse; font-size:12px; min-width:320px; }
+.at thead th { background:var(--dark); padding:9px 12px; font-size:9px; font-weight:700; color:rgba(255,255,255,.6); text-transform:uppercase; letter-spacing:.5px; text-align:right; white-space:nowrap; }
+.at thead th:first-child { text-align:left; color:var(--gold); position:sticky; left:0; background:var(--dark); min-width:160px; }
+.at tbody td { padding:8px 12px; text-align:right; border-bottom:1px solid var(--border); white-space:nowrap; }
+.at tbody td:first-child { text-align:left; position:sticky; left:0; background:var(--white); }
+.at tbody tr:nth-child(even) td { background:#FAFAFA; }
+.at tbody tr:nth-child(even) td:first-child { background:#FAFAFA; }
+.at tr.sec-hdr td { background:#EBEBF5; font-size:8px; font-weight:800; letter-spacing:2px; text-transform:uppercase; color:var(--grey); padding:6px 12px; }
+.at tr.gop-row td { background:var(--dark); color:var(--gold) !important; font-weight:800; }
+.at tr.total-row td { background:#0a3020; color:#3db87a !important; font-weight:800; }
+.at tr.total-row.neg td { background:#3d0a0a; color:#e05656 !important; }
+.at .ind { padding-left:20px !important; font-size:11px !important; color:var(--grey) !important; }
+.scroll-hint { font-size:9px; color:var(--grey); padding:4px 16px 6px; text-align:right; }
+.panel { display:none; }
+.panel.active { display:block; }
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-top">
+    <img class="hdr-logo" src="__LOGO_SRC__" alt="GTH">
+    <div class="hdr-right">
+      <div class="hdr-label">Estado de Resultados</div>
+      <div class="hdr-hotel" id="hdrHotel"></div>
+    </div>
+  </div>
+  <div class="hdr-sub">Analítico Departamental · Gestión &amp; Control</div>
+</div>
+
+<div class="hotel-bar">
+  <div class="bar-lbl">Hotel</div>
+  <div class="chips" id="hotelChips"></div>
+</div>
+
+<div class="period-bar">
+  <div class="period-top">
+    <div class="period-mode active" id="pm-anual" onclick="setPeriodMode('anual')">Anual</div>
+    <div class="period-mode" id="pm-mes" onclick="setPeriodMode('mes')">Por mes</div>
+  </div>
+  <div class="year-row" id="yearRow"></div>
+  <div class="month-row" id="monthRow"></div>
+</div>
+
+<div class="view-wrap">
+  <div class="vt active" onclick="switchView('er',this)">E / R</div>
+  <div class="vt" onclick="switchView('mensual',this)">Mensual</div>
+  <div class="vt" onclick="switchView('anual',this)">Comparativo</div>
+</div>
+
+<div class="panel active" id="panel-er">
+  <div class="kpis" id="kpiGrid"></div>
+  <div class="stats-row" id="statsRow"></div>
+  <div class="pl-wrap">
+    <div class="pl-head"><h2>Estado de Resultados Departamental Analítico</h2><p id="pl-sub"></p></div>
+    <table class="pl">
+      <thead><tr><th>Concepto</th><th style="width:32%">Importe</th><th style="width:14%">% Ventas</th></tr></thead>
+      <tbody id="plBody"></tbody>
+    </table>
+  </div>
+  <div style="height:8px"></div>
+</div>
+
+<div class="panel" id="panel-mensual">
+  <div class="scroll-hint">← deslizá →</div>
+  <div class="mt-wrap">
+    <div class="pl-head"><h2>Evolución Mensual</h2><p id="mt-sub"></p></div>
+    <div class="mt-scroll">
+      <table class="mt">
+        <thead><tr>
+          <th>Mes</th><th>Ventas</th><th>GOP</th><th>% GOP</th>
+          <th>Util. Neta</th><th>% Util.</th><th>Occ.</th><th>ADR</th><th>vs AA</th>
+        </tr></thead>
+        <tbody id="mtBody"></tbody>
+      </table>
+    </div>
+  </div>
+  <div style="height:8px"></div>
+</div>
+
+<div class="panel" id="panel-anual">
+  <div class="scroll-hint">← deslizá →</div>
+  <div class="mt-wrap">
+    <div class="pl-head"><h2>Comparativo Anual</h2><p id="at-sub"></p></div>
+    <div class="at-scroll">
+      <table class="at">
+        <thead><tr id="atHdr"></tr></thead>
+        <tbody id="atBody"></tbody>
+      </table>
+    </div>
+  </div>
+  <div style="height:8px"></div>
+</div>
+
+<script>
+const HOTELS = __HOTELS_DATA__;
+const MONTHS_ORDER = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+let activeHotel = Object.keys(HOTELS)[0];
+let activeYear  = Object.keys(HOTELS[activeHotel].years).sort().pop();
+let activeMonth = null, periodMode = "anual", activeView = "er";
+
+const fM  = v => { if(v==null||isNaN(v))return"—"; const a=Math.abs(Math.round(v)); const s='$'+a.toLocaleString('es-AR'); return v<0?'('+s+')':s; };
+const fP  = v => (v==null||isNaN(v))?"—":(v*100).toFixed(1)+'%';
+const fPd = v => (v==null||isNaN(v))?"—":(v>=0?'+':'')+(v*100).toFixed(1)+'%';
+
+function getD()    { const yd=HOTELS[activeHotel]?.years?.[activeYear]; if(!yd)return null; return (periodMode==='mes'&&activeMonth)?yd.monthly[activeMonth]||null:yd.annual; }
+function getPrevD(){ const py=String(parseInt(activeYear)-1); return (periodMode==='mes'&&activeMonth)?HOTELS[activeHotel]?.years?.[py]?.monthly?.[activeMonth]||null:HOTELS[activeHotel]?.years?.[py]?.annual||null; }
+function periodLabel(){ if(periodMode==='mes'&&activeMonth)return activeMonth+' '+activeYear; const a=HOTELS[activeHotel]?.years?.[activeYear]?.annual; return a?.meses<12?activeYear+' ('+a.meses+' meses)':activeYear; }
+
+function buildHotelChips(){
+  document.getElementById('hotelChips').innerHTML=Object.keys(HOTELS).map(h=>`<button class="chip${h===activeHotel?' active':''}" onclick="selectHotel('${h}')">${h}</button>`).join('');
+  document.getElementById('hdrHotel').textContent=HOTELS[activeHotel].hotel;
+}
+
+function buildPeriod(){
+  const ys=Object.keys(HOTELS[activeHotel].years).sort();
+  if(!ys.includes(activeYear))activeYear=ys[ys.length-1];
+  document.getElementById('yearRow').innerHTML=ys.map(y=>`<div class="yr-tab${y===activeYear?' active':''}" onclick="selectYear('${y}')">${y}</div>`).join('');
+  const mr=document.getElementById('monthRow');
+  if(periodMode==='mes'){
+    mr.classList.add('visible');
+    const avail=Object.keys(HOTELS[activeHotel].years[activeYear]?.monthly||{});
+    if(!avail.includes(activeMonth))activeMonth=avail[avail.length-1]||null;
+    mr.innerHTML=MONTHS_ORDER.map(m=>{const has=avail.includes(m);return`<div class="mo-tab${m===activeMonth?' active':''}${!has?' disabled':''}" onclick="selectMonth('${m}')">${m.slice(0,3)}</div>`;}).join('');
+  } else { mr.classList.remove('visible'); activeMonth=null; }
+  document.getElementById('pm-anual').classList.toggle('active',periodMode==='anual');
+  document.getElementById('pm-mes').classList.toggle('active',periodMode==='mes');
+}
+
+function buildER(){
+  const d=getD(), prev=getPrevD(); if(!d)return;
+  const vt=d.v_total;
+  const badge=(c,p)=>{ if(!p||!c||p===0)return''; const v=(c-p)/Math.abs(p); return`<span class="badge ${v>=0?'badge-up':'badge-down'}">${v>=0?'▲':'▼'} ${fPd(v)}</span>`; };
+  document.getElementById('kpiGrid').innerHTML=`
+    <div class="kpi full dark">
+      <div class="kpi-lbl">Total Ventas · ${periodLabel()}</div>
+      <div class="kpi-val">${fM(vt)}</div>
+      <div class="kpi-sub">GOP: ${fP(d.gop/vt)} · Util. Neta: ${fP(d.ut_neta/vt)}</div>
+      ${badge(vt,prev?.v_total)}
+    </div>
+    <div class="kpi">
+      <div class="kpi-lbl">G.O.P.</div>
+      <div class="kpi-val" style="color:${d.gop>=0?'var(--green)':'var(--red)'};font-size:18px">${fM(d.gop)}</div>
+      <div class="kpi-sub">${fP(d.gop/vt)} s/ventas</div>
+      ${badge(d.gop,prev?.gop)}
+    </div>
+    <div class="kpi">
+      <div class="kpi-lbl">Utilidad Neta</div>
+      <div class="kpi-val" style="color:${d.ut_neta>=0?'var(--green)':'var(--red)'};font-size:18px">${fM(d.ut_neta)}</div>
+      <div class="kpi-sub">${fP(d.ut_neta/vt)} s/ventas</div>
+      ${badge(d.ut_neta,prev?.ut_neta)}
+    </div>`;
+  document.getElementById('statsRow').innerHTML=`
+    <div class="stat"><div class="stat-lbl">Ocupación</div><div class="stat-val" style="color:var(--gold)">${fP(d.occ_pct)}</div></div>
+    <div class="stat"><div class="stat-lbl">ADR</div><div class="stat-val">${fM(d.adr)}</div></div>
+    <div class="stat"><div class="stat-lbl">RevPAR</div><div class="stat-val">${fM(d.revpar)}</div></div>`;
+  document.getElementById('pl-sub').textContent=`${HOTELS[activeHotel].hotel} · ${periodLabel()}`;
+  const vo=d.v_otros||0, tc=d.cv_total+d.nom+d.otros_g;
+  const rows=[
+    {s:'INGRESOS'},
+    {l:'Habitaciones',                v:d.v_hab,        i:true},
+    {l:'Alimentos & Bebidas',         v:d.v_ayb,        i:true},
+    {l:'Otros Ingresos',              v:vo,             i:true},
+    {l:'TOTAL VENTAS',                v:vt,             sub:true},
+    {s:'COSTOS Y GASTOS DEPARTAMENTALES'},
+    {l:'Costo de ventas',             v:-d.cv_total,    i:true},
+    {l:'Nómina departamental',        v:-d.nom,         i:true},
+    {l:'Otros gastos dept.',          v:-d.otros_g,     i:true},
+    {l:'TOTAL COSTOS DEPT.',          v:-tc,            sub:true},
+    {l:'UTILIDAD DEPARTAMENTAL',      v:d.util_dep,     gop:true},
+    {s:'GASTOS NO DISTRIBUIDOS'},
+    {l:'Adm., nómina, mantenimiento', v:-d.gnd,         i:true},
+    {l:'G.O.P.',                      v:d.gop,          gop:true},
+    {s:'CARGOS FIJOS'},
+    {l:'Honorarios, seguros, imp.',   v:-d.cf,          i:true},
+    {l:'UTIL. ANTES DE REMUNERACIÓN', v:d.ut_ant,       utop:true},
+    {l:'Remuneración operador',       v:-d.rem_op,      i:true},
+    {l:'UTILIDAD OPERACIONAL',        v:d.ut_op,        utop:true},
+    {s:'RESULTADO FINAL'},
+    {l:'Ajustes e impuestos',         v:d.ut_neta-d.ut_op, i:true},
+    {l:'UTILIDAD NETA / RESULTADO',   v:d.ut_neta,      total:true},
+  ];
+  let html='';
+  rows.forEach(r=>{
+    if(r.s){html+=`<tr class="sec-hdr"><td colspan="3">${r.s}</td></tr>`;return;}
+    if(r.total){const neg=r.v<0;html+=`<tr class="total-row${neg?' neg':''}"><td>${r.l}</td><td>${fM(r.v)}</td><td class="pct">${fP(r.v/vt)}</td></tr>`;return;}
+    if(r.gop) {html+=`<tr class="gop-row"><td>${r.l}</td><td>${fM(r.v)}</td><td class="pct">${fP(r.v/vt)}</td></tr>`;return;}
+    if(r.utop){html+=`<tr class="ut-op-row"><td>${r.l}</td><td>${fM(r.v)}</td><td class="pct">${fP(r.v/vt)}</td></tr>`;return;}
+    if(r.sub) {html+=`<tr class="line-sub"><td>${r.l}</td><td>${fM(r.v)}</td><td class="pct">${r.v?fP(Math.abs(r.v)/vt):'—'}</td></tr>`;return;}
+    const neg=r.v<0;
+    html+=`<tr><td class="${r.i?'ind':''}">${r.l}</td><td class="${neg?'red':''}">${fM(r.v)}</td><td class="pct">${r.v?fP(Math.abs(r.v)/vt):'—'}</td></tr>`;
+  });
+  document.getElementById('plBody').innerHTML=html;
+}
+
+function buildMensual(){
+  const yd=HOTELS[activeHotel]?.years?.[activeYear]; if(!yd)return;
+  const pyd=HOTELS[activeHotel]?.years?.[String(parseInt(activeYear)-1)];
+  const months=yd.monthly, sorted=MONTHS_ORDER.filter(m=>months[m]);
+  document.getElementById('mt-sub').textContent=`${HOTELS[activeHotel].hotel} · ${activeYear}`;
+  let html='';
+  sorted.forEach(m=>{
+    const r=months[m], vt=r.v_total, p=pyd?.monthly?.[m];
+    const vs=p?`<span class="${(vt-p.v_total)>=0?'mpos':'mneg'}">${fPd((vt-p.v_total)/Math.abs(p.v_total))}</span>`:'—';
+    const ow=Math.round(r.occ_pct*60);
+    const act=periodMode==='mes'&&activeMonth===m;
+    html+=`<tr style="${act?'background:#FFF9F0;':''}" onclick="jumpToMonth('${m}')">
+      <td style="${act?'color:var(--gold);':''}">${m}</td>
+      <td>${fM(vt)}</td><td>${fM(r.gop)}</td>
+      <td class="${r.gop/vt>=0?'mpos':'mneg'}">${fP(r.gop/vt)}</td>
+      <td>${fM(r.ut_neta)}</td>
+      <td class="${r.ut_neta/vt>=0?'mpos':'mneg'}">${fP(r.ut_neta/vt)}</td>
+      <td><div class="occ-b">${fP(r.occ_pct)}<div class="occ-bg"><div class="occ-fill" style="width:${ow}px"></div></div></div></td>
+      <td>${fM(r.adr)}</td><td>${vs}</td>
+    </tr>`;
+  });
+  document.getElementById('mtBody').innerHTML=html;
+}
+
+function buildAnual(){
+  const hotel=HOTELS[activeHotel], ys=Object.keys(hotel.years).sort();
+  document.getElementById('at-sub').textContent=`${hotel.hotel} · ${ys.join(' — ')}`;
+  document.getElementById('atHdr').innerHTML=`<th>Concepto</th>${ys.map(y=>`<th>${y}${hotel.years[y].annual.meses<12?'*':''}</th>`).join('')}<th>Var.</th>`;
+  const metrics=[
+    {s:'INGRESOS'},
+    {l:'Habitaciones',       k:'v_hab',                      ind:true},
+    {l:'A&B',                k:'v_ayb',                      ind:true},
+    {l:'Otros Ingresos',     k:'v_otros',                    ind:true},
+    {l:'TOTAL VENTAS',       k:'v_total'},
+    {s:'RESULTADOS'},
+    {l:'Util. Departamental',k:'util_dep',                   ind:true},
+    {l:'G.O.P.',             k:'gop',                        gop:true},
+    {l:'% GOP',              k:'gop',   k2:'v_total',fmt:'pct',ind:true},
+    {l:'Util. Operacional',  k:'ut_op',                      ind:true},
+    {l:'Utilidad Neta',      k:'ut_neta',                    total:true},
+    {l:'% Util. Neta',       k:'ut_neta',k2:'v_total',fmt:'pct',ind:true},
+    {s:'COSTOS'},
+    {l:'Nómina Dept.',       k:'nom',                        ind:true},
+    {l:'% Nómina/Ventas',    k:'nom',   k2:'v_total',fmt:'pct',ind:true},
+    {l:'G.N.D.',             k:'gnd',                        ind:true},
+    {s:'OPERACIONAL'},
+    {l:'Ocupación Prom.',    k:'occ_pct',          fmt:'pct',ind:true},
+    {l:'ADR Promedio',       k:'adr',                        ind:true},
+    {l:'RevPAR',             k:'revpar',                     ind:true},
+  ];
+  const gv=(a,k,k2)=>{const v=a?.[k];if(v==null)return null;return k2?(a[k2]?v/a[k2]:null):v;};
+  const fv=(v,fmt)=>{if(v==null||isNaN(v))return'—';return fmt==='pct'?fP(v):fM(v);};
+  let html='';
+  metrics.forEach(r=>{
+    if(r.s){html+=`<tr class="sec-hdr"><td colspan="${ys.length+2}">${r.s}</td></tr>`;return;}
+    const vals=ys.map(y=>gv(hotel.years[y]?.annual,r.k,r.k2));
+    const last=vals[vals.length-1], prev2=vals[vals.length-2];
+    let varStr='—';
+    if(last!=null&&prev2!=null&&prev2!==0){const v=(last-prev2)/Math.abs(prev2);varStr=`<span style="font-weight:700;color:${v>=0?'var(--green)':'var(--red)'}">${v>=0?'▲':'▼'} ${fPd(v)}</span>`;}
+    const cls=r.gop?'gop-row':r.total?('total-row'+(last<0?' neg':'')):'';
+    html+=`<tr class="${cls}"><td class="${r.ind&&!r.gop&&!r.total?'ind':''}">${r.l}</td>${vals.map(v=>`<td class="${v<0&&!r.gop&&!r.total?'red':''}">${fv(v,r.fmt)}</td>`).join('')}<td>${varStr}</td></tr>`;
+  });
+  document.getElementById('atBody').innerHTML=html;
+}
+
+function selectHotel(h){activeHotel=h;activeMonth=null;render();}
+function selectYear(y) {activeYear=y; activeMonth=null;render();}
+function selectMonth(m){activeMonth=m;render();}
+function jumpToMonth(m){setPeriodMode('mes');activeMonth=m;render();}
+function setPeriodMode(m){periodMode=m;if(m==='anual')activeMonth=null;render();}
+function switchView(name,btn){
+  activeView=name;
+  document.querySelectorAll('.vt').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  render();
+}
+function render(){
+  buildHotelChips(); buildPeriod();
+  if(activeView==='er')buildER();
+  else if(activeView==='mensual')buildMensual();
+  else buildAnual();
+}
+render();
+</script>
+</body>
+</html>
