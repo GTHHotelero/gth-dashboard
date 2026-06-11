@@ -12,35 +12,40 @@
   --gold:#9E8E5A;--gold-bg:#F5F2EA;--gold-border:rgba(158,142,90,.25);
   --bg:#F2F1EE;--white:#FFFFFF;--border:rgba(0,0,0,0.08);
   --shadow:0 1px 4px rgba(0,0,0,0.06);--text:#2D2D2D;--muted:#787878;
-  --pos:#1D9E75;--neg:#C0392B;--amber:#E6A000;--bnav:60px;
+  --pos:#1D9E75;--neg:#C0392B;--amber:#E6A000;--bnav:56px;
 }
-html{background:var(--bg)}
-body{font-family:'Lato',system-ui,sans-serif;color:var(--text);min-height:100vh;overflow-y:scroll;-webkit-overflow-scrolling:touch;background:var(--bg)}
-#topbar{position:sticky;top:0;z-index:200;background:var(--white);border-bottom:3px solid var(--gold);padding:10px 14px;box-shadow:var(--shadow)}
+html,body{background:var(--bg);font-family:'Lato',system-ui,sans-serif;color:var(--text);min-height:100vh;overflow-y:scroll;-webkit-overflow-scrolling:touch}
+
+/* ── TOPBARS ── */
+.topbar{position:sticky;top:0;z-index:200;background:var(--white);border-bottom:3px solid var(--gold);padding:10px 14px;box-shadow:var(--shadow)}
 .tb-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-.tb-logo{display:flex;align-items:center;gap:10px}
-.tb-logo img{height:36px;width:auto;object-fit:contain}
-.tb-logo-text h1{font-size:13px;font-weight:900;color:var(--text);letter-spacing:-.3px;line-height:1.1}
-.tb-logo-text p{font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-top:1px}
+.tb-logo{display:flex;align-items:center;gap:8px}
+.tb-logo img{height:34px;width:auto;object-fit:contain}
+.tb-logo-text h1{font-size:12px;font-weight:900;color:var(--text);letter-spacing:-.3px;line-height:1.2}
+.tb-logo-text p{font-size:9px;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;margin-top:1px}
+.badge{font-size:11px;font-weight:700;color:var(--gold);background:var(--gold-bg);padding:4px 10px;border-radius:6px;border:1px solid var(--gold-border);white-space:nowrap}
 .filter-bar{display:flex;align-items:center;gap:8px}
 .filter-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);white-space:nowrap}
 .filter-sel{display:flex;align-items:center;background:var(--gold-bg);border:1px solid var(--gold-border);border-radius:8px;padding:6px 10px;flex:1}
-.filter-sel select{background:transparent;border:none;color:var(--text);font-family:inherit;font-size:13px;font-weight:700;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;width:100%;padding-right:16px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%239E8E5A'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0 center}
-/* Topbar ejecutivo (oculto por defecto) */
-#topbar-ej{display:none;position:sticky;top:0;z-index:200;background:var(--white);border-bottom:3px solid var(--gold);padding:10px 14px;box-shadow:var(--shadow)}
-.badge{font-size:11px;font-weight:700;color:var(--gold);background:var(--gold-bg);padding:4px 10px;border-radius:6px;border:1px solid var(--gold-border);white-space:nowrap}
+.filter-sel select{background:transparent;border:none;color:var(--text);font-family:inherit;font-size:13px;font-weight:700;outline:none;cursor:pointer;-webkit-appearance:none;width:100%;padding-right:16px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%239E8E5A'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0 center}
 .kpi-summary{display:grid;grid-template-columns:repeat(4,1fr);margin-top:10px;border:1px solid var(--border);border-radius:8px;overflow:hidden}
-.kpi-s{padding:10px 8px;text-align:center}
+.kpi-s{padding:8px 6px;text-align:center}
 .kpi-s:not(:last-child){border-right:1px solid var(--border)}
-.kpi-s-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:3px}
-.kpi-s-val{font-size:13px;font-weight:900}
-#content{padding:14px 14px calc(var(--bnav)+120px)}
-#bnav{position:fixed;bottom:0;left:0;right:0;z-index:200;height:var(--bnav);background:var(--white);border-top:3px solid var(--gold);display:flex;box-shadow:0 -2px 8px rgba(0,0,0,.08)}
-.bn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);border-top:3px solid transparent;-webkit-tap-highlight-color:transparent}
+.kpi-s-lbl{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:2px}
+.kpi-s-val{font-size:12px;font-weight:900}
+
+/* ── NAV scrolleable ── */
+#bnav{position:fixed;bottom:0;left:0;right:0;z-index:200;height:var(--bnav);background:var(--white);border-top:3px solid var(--gold);display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;box-shadow:0 -2px 8px rgba(0,0,0,.08);scrollbar-width:none}
+#bnav::-webkit-scrollbar{display:none}
+.bn{flex:0 0 auto;min-width:68px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);border-top:3px solid transparent;padding:0 6px;-webkit-tap-highlight-color:transparent}
 .bn.active{color:var(--gold);border-top-color:var(--gold)}
-.bn-icon{font-size:18px;line-height:1}
+.bn-icon{font-size:16px;line-height:1}
+
+/* ── TABS ── */
 .tab{display:none}.tab.active{display:block}
-/* Operativo */
+#content{padding:14px 14px calc(var(--bnav) + 20px)}
+
+/* ── OPERATIVO ── */
 .sec-header{margin-bottom:12px}
 .sec-title{font-size:18px;font-weight:900;letter-spacing:-.5px}
 .sec-sub{font-size:11px;color:var(--muted);margin-top:2px}
@@ -90,14 +95,15 @@ body{font-family:'Lato',system-ui,sans-serif;color:var(--text);min-height:100vh;
 .cad-hotel{font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .cad-val{font-size:12px;font-weight:700;text-align:right}
 .badge-warn{background:#FFF3DC;color:#7a5000;font-size:9px;padding:1px 5px;border-radius:4px;font-weight:700}
-/* Ejecutivo */
+
+/* ── EJECUTIVO ── */
 .card{background:var(--white);border-radius:14px;border:1px solid var(--border);margin-bottom:16px;overflow:hidden;box-shadow:var(--shadow)}
 .card-header{padding:12px 16px;border-bottom:1px solid var(--border);background:var(--gold-bg)}
 .card-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--gold)}
 .card-body{padding:16px}
 .chart-wrap{position:relative;width:100%;height:220px}
 .legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-.leg-item{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--text)}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600}
 .leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 .bench-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
 .bench-card{border-radius:10px;padding:12px;border:1px solid var(--border)}
@@ -115,7 +121,7 @@ body{font-family:'Lato',system-ui,sans-serif;color:var(--text);min-height:100vh;
 <body>
 
 <!-- TOPBAR OPERATIVO -->
-<div id="topbar-op" id="topbar">
+<div id="topbar-op" class="topbar">
   <div class="tb-top">
     <div class="tb-logo">
       <img src="data:image/jpeg;base64,LOGO_PLACEHOLDER" alt="GTH">
@@ -129,8 +135,8 @@ body{font-family:'Lato',system-ui,sans-serif;color:var(--text);min-height:100vh;
   </div>
 </div>
 
-<!-- TOPBAR EJECUTIVO -->
-<div id="topbar-ej">
+<!-- TOPBAR EJECUTIVO (oculto por defecto) -->
+<div id="topbar-ej" class="topbar" style="display:none">
   <div class="tb-top">
     <div class="tb-logo">
       <img src="data:image/jpeg;base64,LOGO_PLACEHOLDER" alt="GTH">
@@ -149,29 +155,41 @@ body{font-family:'Lato',system-ui,sans-serif;color:var(--text);min-height:100vh;
 <div id="content">
   <!-- ══ TABS OPERATIVOS ══ -->
   <div id="alertas-box"></div>
-  <div id="tab-dia-cad" class="tab active"><div class="sec-header"><div class="sec-title">Día — Cadena GTH</div><div class="sec-sub" id="sub-dia-cad"></div></div><div id="cont-dia-cad"></div></div>
-  <div id="tab-dia-hot" class="tab"><div class="sec-header"><div class="sec-title">Día — Por Hotel</div><div class="sec-sub" id="sub-dia-hot"></div></div><div id="cont-dia-hot"></div></div>
-  <div id="tab-mes-cad" class="tab"><div class="sec-header"><div class="sec-title">Mes — Cadena GTH</div><div class="sec-sub" id="sub-mes-cad"></div></div><div id="cont-mes-cad"></div></div>
-  <div id="tab-mes-hot" class="tab"><div class="sec-header"><div class="sec-title">Mes — Por Hotel</div><div class="sec-sub" id="sub-mes-hot"></div></div><div id="cont-mes-hot"></div></div>
+  <div id="tab-dia-cad" class="tab active">
+    <div class="sec-header"><div class="sec-title">Día — Cadena GTH</div><div class="sec-sub" id="sub-dia-cad"></div></div>
+    <div id="cont-dia-cad"></div>
+  </div>
+  <div id="tab-dia-hot" class="tab">
+    <div class="sec-header"><div class="sec-title">Día — Por Hotel</div><div class="sec-sub" id="sub-dia-hot"></div></div>
+    <div id="cont-dia-hot"></div>
+  </div>
+  <div id="tab-mes-cad" class="tab">
+    <div class="sec-header"><div class="sec-title">Mes — Cadena GTH</div><div class="sec-sub" id="sub-mes-cad"></div></div>
+    <div id="cont-mes-cad"></div>
+  </div>
+  <div id="tab-mes-hot" class="tab">
+    <div class="sec-header"><div class="sec-title">Mes — Por Hotel</div><div class="sec-sub" id="sub-mes-hot"></div></div>
+    <div id="cont-mes-hot"></div>
+  </div>
 
   <!-- ══ TABS EJECUTIVOS ══ -->
   <div id="tab-evolucion" class="tab">
     <div class="sec-header"><div class="sec-title">Evolución Mensual</div><div class="sec-sub">Tendencia histórica por hotel</div></div>
     <div class="card"><div class="card-header"><div class="card-title">Ocupación mensual (%)</div></div>
       <div class="card-body"><div class="chart-wrap"><canvas id="c-ocup"></canvas></div>
-        <div class="legend"><div class="leg-item"><div class="leg-dot" style="background:#378ADD"></div>HJ Plaza La Ribera</div><div class="leg-item"><div class="leg-dot" style="background:#1D9E75"></div>HJ Cariló</div><div class="leg-item"><div class="leg-dot" style="background:#D85A30"></div>Soho Park</div><div class="leg-item"><div class="leg-dot" style="background:#8B6914"></div>HJ Bahia Blanca</div></div>
+        <div class="legend"><div class="leg-item"><div class="leg-dot" style="background:#378ADD"></div>HJ La Ribera</div><div class="leg-item"><div class="leg-dot" style="background:#1D9E75"></div>HJ Cariló</div><div class="leg-item"><div class="leg-dot" style="background:#D85A30"></div>Soho Park</div><div class="leg-item"><div class="leg-dot" style="background:#8B6914"></div>HJ BBA</div></div>
     </div></div>
     <div class="card"><div class="card-header"><div class="card-title">ADR mensual (miles $)</div></div>
       <div class="card-body"><div class="chart-wrap"><canvas id="c-adr"></canvas></div>
-        <div class="legend"><div class="leg-item"><div class="leg-dot" style="background:#378ADD"></div>HJ Plaza La Ribera</div><div class="leg-item"><div class="leg-dot" style="background:#1D9E75"></div>HJ Cariló</div><div class="leg-item"><div class="leg-dot" style="background:#D85A30"></div>Soho Park</div><div class="leg-item"><div class="leg-dot" style="background:#8B6914"></div>HJ Bahia Blanca</div></div>
+        <div class="legend"><div class="leg-item"><div class="leg-dot" style="background:#378ADD"></div>HJ La Ribera</div><div class="leg-item"><div class="leg-dot" style="background:#1D9E75"></div>HJ Cariló</div><div class="leg-item"><div class="leg-dot" style="background:#D85A30"></div>Soho Park</div><div class="leg-item"><div class="leg-dot" style="background:#8B6914"></div>HJ BBA</div></div>
     </div></div>
     <div class="card"><div class="card-header"><div class="card-title">RevPAR mensual (miles $)</div></div>
       <div class="card-body"><div class="chart-wrap"><canvas id="c-rp"></canvas></div>
-        <div class="legend"><div class="leg-item"><div class="leg-dot" style="background:#378ADD"></div>HJ Plaza La Ribera</div><div class="leg-item"><div class="leg-dot" style="background:#1D9E75"></div>HJ Cariló</div><div class="leg-item"><div class="leg-dot" style="background:#D85A30"></div>Soho Park</div><div class="leg-item"><div class="leg-dot" style="background:#8B6914"></div>HJ Bahia Blanca</div></div>
+        <div class="legend"><div class="leg-item"><div class="leg-dot" style="background:#378ADD"></div>HJ La Ribera</div><div class="leg-item"><div class="leg-dot" style="background:#1D9E75"></div>HJ Cariló</div><div class="leg-item"><div class="leg-dot" style="background:#D85A30"></div>Soho Park</div><div class="leg-item"><div class="leg-dot" style="background:#8B6914"></div>HJ BBA</div></div>
     </div></div>
     <div class="card"><div class="card-header"><div class="card-title">Revenue acumulado por hotel (mill. $)</div></div>
       <div class="card-body"><div class="chart-wrap"><canvas id="c-rev"></canvas></div>
-        <div class="legend"><div class="leg-item"><div class="leg-dot" style="background:#378ADD"></div>HJ Plaza La Ribera</div><div class="leg-item"><div class="leg-dot" style="background:#1D9E75"></div>HJ Cariló</div><div class="leg-item"><div class="leg-dot" style="background:#D85A30"></div>Soho Park</div><div class="leg-item"><div class="leg-dot" style="background:#8B6914"></div>HJ Bahia Blanca</div></div>
+        <div class="legend"><div class="leg-item"><div class="leg-dot" style="background:#378ADD"></div>HJ La Ribera</div><div class="leg-item"><div class="leg-dot" style="background:#1D9E75"></div>HJ Cariló</div><div class="leg-item"><div class="leg-dot" style="background:#D85A30"></div>Soho Park</div><div class="leg-item"><div class="leg-dot" style="background:#8B6914"></div>HJ BBA</div></div>
     </div></div>
   </div>
 
@@ -187,32 +205,29 @@ body{font-family:'Lato',system-ui,sans-serif;color:var(--text);min-height:100vh;
   <div id="tab-scatter" class="tab">
     <div class="sec-header"><div class="sec-title">Ocupación vs Tarifa</div><div class="sec-sub">Relación precio–demanda por hotel y mes</div></div>
     <div id="scatter-insight"></div>
-    <div class="card"><div class="card-header"><div class="card-title">Dispersión Ocup% vs ADR · todos los meses</div></div>
+    <div class="card"><div class="card-header"><div class="card-title">Dispersión Ocup% vs ADR</div></div>
       <div class="card-body"><div class="chart-wrap" style="height:300px"><canvas id="s-scatter"></canvas></div>
-        <div class="legend" style="margin-top:12px"><div class="leg-item"><div class="leg-dot" style="background:#378ADD"></div>HJ Plaza La Ribera</div><div class="leg-item"><div class="leg-dot" style="background:#1D9E75"></div>HJ Cariló</div><div class="leg-item"><div class="leg-dot" style="background:#D85A30"></div>Soho Park</div><div class="leg-item"><div class="leg-dot" style="background:#8B6914"></div>HJ Bahia Blanca</div></div>
+        <div class="legend" style="margin-top:12px"><div class="leg-item"><div class="leg-dot" style="background:#378ADD"></div>HJ La Ribera</div><div class="leg-item"><div class="leg-dot" style="background:#1D9E75"></div>HJ Cariló</div><div class="leg-item"><div class="leg-dot" style="background:#D85A30"></div>Soho Park</div><div class="leg-item"><div class="leg-dot" style="background:#8B6914"></div>HJ BBA</div></div>
     </div></div>
   </div>
-
-  <div style="height:100px"></div>
 </div>
 
-<!-- NAV UNIFICADO -->
+<!-- NAV scrolleable horizontal -->
 <div id="bnav">
-  <div class="bn active" data-tab="dia-cad"    onclick="switchTab('dia-cad',this)">   <div class="bn-icon">📅</div>Día Cadena</div>
-  <div class="bn"         data-tab="dia-hot"    onclick="switchTab('dia-hot',this)">   <div class="bn-icon">🏨</div>Día Hotel</div>
-  <div class="bn"         data-tab="mes-cad"    onclick="switchTab('mes-cad',this)">   <div class="bn-icon">📆</div>Mes Cadena</div>
-  <div class="bn"         data-tab="mes-hot"    onclick="switchTab('mes-hot',this)">   <div class="bn-icon">📊</div>Mes Hotel</div>
-  <div class="bn"         data-tab="evolucion"  onclick="switchTab('evolucion',this)"> <div class="bn-icon">📈</div>Evolución</div>
-  <div class="bn"         data-tab="benchmark"  onclick="switchTab('benchmark',this)"> <div class="bn-icon">🏆</div>Benchmark</div>
-  <div class="bn"         data-tab="scatter"    onclick="switchTab('scatter',this)">   <div class="bn-icon">🎯</div>Ocup/ADR</div>
+  <div class="bn active" onclick="switchTab('dia-cad',this)"><div class="bn-icon">📅</div>Día Cadena</div>
+  <div class="bn"         onclick="switchTab('dia-hot',this)"><div class="bn-icon">🏨</div>Día Hotel</div>
+  <div class="bn"         onclick="switchTab('mes-cad',this)"><div class="bn-icon">📆</div>Mes Cadena</div>
+  <div class="bn"         onclick="switchTab('mes-hot',this)"><div class="bn-icon">📊</div>Mes Hotel</div>
+  <div class="bn"         onclick="switchTab('evolucion',this)"><div class="bn-icon">📈</div>Evolución</div>
+  <div class="bn"         onclick="switchTab('benchmark',this)"><div class="bn-icon">🏆</div>Benchmark</div>
+  <div class="bn"         onclick="switchTab('scatter',this)"><div class="bn-icon">🎯</div>Ocup/ADR</div>
 </div>
 
 <script>
-// ── DATOS INYECTADOS POR generate_dashboard.py ──────────────────────────────
+// ── DATOS (inyectados por generate_dashboard.py) ──────────────────────────────
 const DB = {};
 const FECHAS = [];
 const HOTELES = [];
-// Ejecutivo
 const MESES_EJ = [];
 const SERIES_OCUP = {};
 const SERIES_ADR  = {};
@@ -220,26 +235,44 @@ const SERIES_RP   = {};
 const SERIES_REV  = {};
 const BENCH       = {};
 const SCATTER     = [];
+const HAB_TOTAL   = 346;
 const HOTELES_EJ  = [
-  {"id":"plr","nombre":"HJ Plaza La Ribera",    "color":"#378ADD","hab":104},
-  {"id":"hjc","nombre":"Howard Johnson Cariló", "color":"#1D9E75","hab":120},
-  {"id":"soho","nombre":"Soho Park",            "color":"#D85A30","hab":43},
-  {"id":"bba","nombre":"HJ Bahia Blanca",       "color":"#8B6914","hab":79}
+  {"nombre":"HJ Plaza La Ribera",    "color":"#378ADD","hab":104},
+  {"nombre":"Howard Johnson Cariló", "color":"#1D9E75","hab":120},
+  {"nombre":"Soho Park",             "color":"#D85A30","hab":43},
+  {"nombre":"HJ Bahia Blanca",       "color":"#8B6914","hab":79}
 ];
-const HAB_TOTAL = 346;
 
-// ── HELPERS ──────────────────────────────────────────────────────────────────
-function fm(v){if(!v)return'—';return'$ '+Math.round(v).toLocaleString('es-AR')}
-function fmM(v){if(!v)return'—';return'$ '+(v/1e6).toFixed(1)+'M'}
-function fp(v){if(v===undefined||v===null)return'—';return v.toFixed(1)+'%'}
-function ocColor(v){return v>=50?'var(--pos)':v<20?'var(--neg)':'var(--amber)'}
-function varPct(a,b){if(!b)return'<span class="var-neu">s/d</span>';const p=((a-b)/Math.abs(b)*100).toFixed(1);return'<span class="'+(p>=0?'var-pos':'var-neg')+'">'+(p>=0?'+':'')+p+'%</span>'}
-function chipOc(v,vaa,tipo){if(!vaa)return'<span class="chip chip-neu">AA: s/d</span>';let d=v-vaa,txt,up=d>=0;if(tipo==='pct')txt=(up?'↑':'↓')+' '+Math.abs(d).toFixed(1)+'pp vs AA';else{let p=(d/Math.abs(vaa)*100);txt=(up?'↑':'↓')+' '+Math.abs(p).toFixed(0)+'% vs AA'}return'<span class="chip '+(up?'chip-pos':'chip-neg')+'">'+txt+'</span>'}
-function revAABlock(rev,rooms,ayb,rev_aa,rooms_aa,ayb_aa){return'<div class="rev-aa-strip"><div class="rev-aa-cell"><div class="rev-aa-lbl">Revenue AA</div><div class="rev-aa-val">'+fmM(rev_aa)+'</div><div class="rev-aa-var">'+varPct(rev,rev_aa)+'</div></div><div class="rev-aa-cell"><div class="rev-aa-lbl">Rooms AA</div><div class="rev-aa-val">'+fmM(rooms_aa)+'</div><div class="rev-aa-var">'+varPct(rooms,rooms_aa)+'</div></div><div class="rev-aa-cell"><div class="rev-aa-lbl">A&B AA</div><div class="rev-aa-val">'+fmM(ayb_aa)+'</div><div class="rev-aa-var">'+varPct(ayb,ayb_aa)+'</div></div></div>'}
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+const fm  = v => v ? '$ '+Math.round(v).toLocaleString('es-AR') : '—';
+const fmM = v => v ? '$ '+(v/1e6).toFixed(1)+'M' : '—';
+const fp  = v => (v!==undefined&&v!==null) ? v.toFixed(1)+'%' : '—';
+const ocColor = v => v>=50?'var(--pos)':v<20?'var(--neg)':'var(--amber)';
 
-// ── TOPBAR SWITCHER ───────────────────────────────────────────────────────────
-const TABS_OP = ['dia-cad','dia-hot','mes-cad','mes-hot'];
+function varPct(a,b){
+  if(!b) return '<span class="var-neu">s/d</span>';
+  const p=((a-b)/Math.abs(b)*100).toFixed(1);
+  return `<span class="${p>=0?'var-pos':'var-neg'}">${p>=0?'+':''}${p}%</span>`;
+}
+function chipOc(v,vaa,tipo){
+  if(!vaa) return '<span class="chip chip-neu">AA: s/d</span>';
+  const d=v-vaa, up=d>=0;
+  const txt = tipo==='pct'
+    ? `${up?'↑':'↓'} ${Math.abs(d).toFixed(1)}pp vs AA`
+    : `${up?'↑':'↓'} ${Math.abs(d/Math.abs(vaa)*100).toFixed(0)}% vs AA`;
+  return `<span class="chip ${up?'chip-pos':'chip-neg'}">${txt}</span>`;
+}
+function revAABlock(rev,rooms,ayb,raa,rooaa,aybaa){
+  return `<div class="rev-aa-strip">
+    <div class="rev-aa-cell"><div class="rev-aa-lbl">Revenue AA</div><div class="rev-aa-val">${fmM(raa)}</div><div class="rev-aa-var">${varPct(rev,raa)}</div></div>
+    <div class="rev-aa-cell"><div class="rev-aa-lbl">Rooms AA</div><div class="rev-aa-val">${fmM(rooaa)}</div><div class="rev-aa-var">${varPct(rooms,rooaa)}</div></div>
+    <div class="rev-aa-cell"><div class="rev-aa-lbl">A&B AA</div><div class="rev-aa-val">${fmM(aybaa)}</div><div class="rev-aa-var">${varPct(ayb,aybaa)}</div></div>
+  </div>`;
+}
+
+// ── TABS ──────────────────────────────────────────────────────────────────────
 const TABS_EJ = ['evolucion','benchmark','scatter'];
+
 function switchTab(name, el){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.bn').forEach(b=>b.classList.remove('active'));
@@ -247,8 +280,8 @@ function switchTab(name, el){
   el.classList.add('active');
   window.scrollTo(0,0);
   const isEj = TABS_EJ.includes(name);
-  document.getElementById('topbar-op').style.display = isEj ? 'none' : 'block';
-  document.getElementById('topbar-ej').style.display = isEj ? 'block' : 'none';
+  document.getElementById('topbar-op').style.display = isEj ? 'none' : '';
+  document.getElementById('topbar-ej').style.display = isEj ? '' : 'none';
   if(name==='evolucion') buildEvolucion();
   else if(name==='benchmark') buildBenchmark();
   else if(name==='scatter') buildScatter();
@@ -257,19 +290,20 @@ function switchTab(name, el){
 // ── SELECTOR FECHAS ───────────────────────────────────────────────────────────
 const sel = document.getElementById('sel-fecha');
 FECHAS.forEach(f=>{const o=document.createElement('option');o.value=f;o.textContent=f;sel.appendChild(o)});
-sel.value=FECHAS[0];
+if(FECHAS.length) sel.value=FECHAS[0];
 
 // ── OPERATIVO ─────────────────────────────────────────────────────────────────
 function renderAlertas(fecha){
-  const data=DB[fecha]||{};let html='';
+  const data=DB[fecha]||{};
+  let html='';
   HOTELES.forEach(h=>{
     const d=data[h.nombre];
-    if(!d){html+='<div class="alert-banner ac-warn">⚠️ '+h.nombre+': Sin datos para '+fecha+'</div>';return}
-    if(d.sin_k007){html+='<div class="alert-banner ac-warn">⚠️ '+h.nombre+': Reporte del día no disponible</div>';return}
+    if(!d){html+=`<div class="alert-banner ac-warn">⚠️ ${h.nombre}: Sin datos para ${fecha}</div>`;return}
+    if(d.sin_k007){html+=`<div class="alert-banner ac-warn">⚠️ ${h.nombre}: Reporte del día no disponible</div>`;return}
     const oc=d.d_ocup;
-    if(oc<20)html+='<div class="alert-banner ac-critico">🔴 CRÍTICO — '+h.nombre+': Ocupación del día '+fp(oc)+' — por debajo del 20%</div>';
-    else if(oc<40)html+='<div class="alert-banner ac-alerta">⚠️ ALERTA — '+h.nombre+': Ocupación del día '+fp(oc)+'</div>';
-    else html+='<div class="alert-banner ac-ok">✅ '+h.nombre+': Ocupación del día '+fp(oc)+'</div>';
+    if(oc<20) html+=`<div class="alert-banner ac-critico">🔴 CRÍTICO — ${h.nombre}: Ocupación del día ${fp(oc)} — por debajo del 20%</div>`;
+    else if(oc<40) html+=`<div class="alert-banner ac-alerta">⚠️ ALERTA — ${h.nombre}: Ocupación del día ${fp(oc)}</div>`;
+    else html+=`<div class="alert-banner ac-ok">✅ ${h.nombre}: Ocupación del día ${fp(oc)}</div>`;
   });
   document.getElementById('alertas-box').innerHTML=html;
 }
@@ -277,43 +311,107 @@ function renderAlertas(fecha){
 function cadenaBlock(fecha,tab){
   const data=DB[fecha]||{};
   const hs=HOTELES.map(h=>data[h.nombre]).filter(Boolean);
-  if(!hs.length)return'<div style="padding:20px;text-align:center;color:var(--muted)">Sin datos para esta fecha</div>';
+  if(!hs.length) return '<div style="padding:20px;text-align:center;color:var(--muted)">Sin datos</div>';
   const pfx=tab==='dia'?'d_':'m_';
   const sum=k=>hs.reduce((s,h)=>s+(h[k]||0),0);
   const tot_rev=sum(pfx+'rev'),tot_rooms=sum(pfx+'rooms'),tot_ayb=sum(pfx+'ayb');
-  const tot_rev_aa=sum(pfx+'rev_aa'),tot_rooms_aa=sum(pfx+'rooms_aa'),tot_ayb_aa=sum(pfx+'ayb_aa');
+  const tot_raa=sum(pfx+'rev_aa'),tot_rooa=sum(pfx+'rooms_aa'),tot_ayba=sum(pfx+'ayb_aa');
   const tot_lleg=sum(pfx+'lleg'),tot_sal=sum(pfx+'sal')||0;
   const avg_oc=sum(pfx+'ocup')/HOTELES.length;
-  const avg_adr=sum(pfx+'adr')/hs.filter(h=>h[pfx+'adr']).length;
-  const avg_rp=sum(pfx+'revpar')/hs.filter(h=>h[pfx+'revpar']).length;
+  const cnt_adr=hs.filter(h=>h[pfx+'adr']).length||1;
+  const avg_adr=sum(pfx+'adr')/cnt_adr;
+  const cnt_rp=hs.filter(h=>h[pfx+'revpar']).length||1;
+  const avg_rp=sum(pfx+'revpar')/cnt_rp;
   let rows='';
   HOTELES.forEach(h=>{
     const d=data[h.nombre];const noK=!d||(d.sin_k007&&tab==='dia');const oc=d?d[pfx+'ocup']:0;
-    rows+='<div class="cad-row"><div class="cad-hotel" style="color:'+h.color+'">'+h.nombre.replace('Howard Johnson ','HJ ')+(noK?' <span class="badge-warn">Sin K007</span>':'')+'</div><div class="cad-val" style="color:'+ocColor(oc)+'">'+(d?fp(oc):'—')+'</div><div class="cad-val">'+(d?fm(d[pfx+'adr']):'—')+'</div><div class="cad-val">'+(d?fm(d[pfx+'revpar']):'—')+'</div></div>';
+    rows+=`<div class="cad-row"><div class="cad-hotel" style="color:${h.color}">${h.nombre.replace('Howard Johnson ','HJ ')}${noK?' <span class="badge-warn">Sin K007</span>':''}</div><div class="cad-val" style="color:${ocColor(oc)}">${d?fp(oc):'—'}</div><div class="cad-val">${d?fm(d[pfx+'adr']):'—'}</div><div class="cad-val">${d?fm(d[pfx+'revpar']):'—'}</div></div>`;
   });
-  return'<div class="hotel-card" style="border-top:4px solid var(--gold)"><div class="hotel-header" style="background:linear-gradient(135deg,#9E8E5A,#7a6a3a)"><div><div class="hotel-name">Cadena GTH — '+(tab==='dia'?'Día':'Mes Acumulado')+'</div><div style="font-size:10px;opacity:.85;margin-top:3px">4 hoteles · '+HAB_TOTAL+' habitaciones totales</div></div><div class="hotel-meta-r">Lleg: '+tot_lleg+' | Sal: '+tot_sal+'</div></div><div class="kpi-4"><div class="kpi-mini"><div class="kpi-mini-lbl">Ocup. Prom.</div><div class="kpi-mini-val" style="color:'+ocColor(avg_oc)+'">'+fp(avg_oc)+'</div></div><div class="kpi-mini"><div class="kpi-mini-lbl">ADR Prom.</div><div class="kpi-mini-val">'+fm(avg_adr)+'</div></div><div class="kpi-mini"><div class="kpi-mini-lbl">RevPAR Prom.</div><div class="kpi-mini-val">'+fm(avg_rp)+'</div></div><div class="kpi-mini"><div class="kpi-mini-lbl">Revenue Total</div><div class="kpi-mini-val">'+fmM(tot_rev)+'</div></div></div><div class="kpi-4" style="background:#FAFAFA"><div class="kpi-mini"><div class="kpi-mini-lbl">Hab. Totales</div><div class="kpi-mini-val">'+HAB_TOTAL+'</div></div><div class="kpi-mini"><div class="kpi-mini-lbl">Llegadas</div><div class="kpi-mini-val">'+tot_lleg+'</div></div><div class="kpi-mini"><div class="kpi-mini-lbl">Rooms Rev.</div><div class="kpi-mini-val">'+fmM(tot_rooms)+'</div></div><div class="kpi-mini"><div class="kpi-mini-lbl">A&B Rev.</div><div class="kpi-mini-val">'+fmM(tot_ayb)+'</div></div></div><div class="cad-row" style="background:var(--gold-bg);border-top:1px solid var(--border)"><div class="cad-head">Hotel</div><div class="cad-head" style="text-align:right">Ocup%</div><div class="cad-head" style="text-align:right">ADR</div><div class="cad-head" style="text-align:right">RevPAR</div></div>'+rows+'<div class="rev-strip"><div class="rev-cell"><div class="rev-lbl">Revenue Cadena</div><div class="rev-val">'+fmM(tot_rev)+'</div></div><div class="rev-cell"><div class="rev-lbl">Rooms</div><div class="rev-val">'+fmM(tot_rooms)+'</div></div><div class="rev-cell"><div class="rev-lbl">A&B</div><div class="rev-val">'+fmM(tot_ayb)+'</div></div></div>'+revAABlock(tot_rev,tot_rooms,tot_ayb,tot_rev_aa,tot_rooms_aa,tot_ayb_aa)+'</div>';
+  return `<div class="hotel-card" style="border-top:4px solid var(--gold)">
+    <div class="hotel-header" style="background:linear-gradient(135deg,#9E8E5A,#7a6a3a)">
+      <div><div class="hotel-name">Cadena GTH — ${tab==='dia'?'Día':'Mes Acumulado'}</div><div style="font-size:10px;opacity:.85;margin-top:3px">4 hoteles · ${HAB_TOTAL} hab.</div></div>
+      <div class="hotel-meta-r">Lleg: ${tot_lleg} | Sal: ${tot_sal}</div>
+    </div>
+    <div class="kpi-4">
+      <div class="kpi-mini"><div class="kpi-mini-lbl">Ocup. Prom.</div><div class="kpi-mini-val" style="color:${ocColor(avg_oc)}">${fp(avg_oc)}</div></div>
+      <div class="kpi-mini"><div class="kpi-mini-lbl">ADR Prom.</div><div class="kpi-mini-val">${fm(avg_adr)}</div></div>
+      <div class="kpi-mini"><div class="kpi-mini-lbl">RevPAR Prom.</div><div class="kpi-mini-val">${fm(avg_rp)}</div></div>
+      <div class="kpi-mini"><div class="kpi-mini-lbl">Revenue Total</div><div class="kpi-mini-val">${fmM(tot_rev)}</div></div>
+    </div>
+    <div class="kpi-4" style="background:#FAFAFA">
+      <div class="kpi-mini"><div class="kpi-mini-lbl">Hab. Totales</div><div class="kpi-mini-val">${HAB_TOTAL}</div></div>
+      <div class="kpi-mini"><div class="kpi-mini-lbl">Llegadas</div><div class="kpi-mini-val">${tot_lleg}</div></div>
+      <div class="kpi-mini"><div class="kpi-mini-lbl">Rooms Rev.</div><div class="kpi-mini-val">${fmM(tot_rooms)}</div></div>
+      <div class="kpi-mini"><div class="kpi-mini-lbl">A&B Rev.</div><div class="kpi-mini-val">${fmM(tot_ayb)}</div></div>
+    </div>
+    <div class="cad-row" style="background:var(--gold-bg);border-top:1px solid var(--border)">
+      <div class="cad-head">Hotel</div><div class="cad-head" style="text-align:right">Ocup%</div>
+      <div class="cad-head" style="text-align:right">ADR</div><div class="cad-head" style="text-align:right">RevPAR</div>
+    </div>
+    ${rows}
+    <div class="rev-strip">
+      <div class="rev-cell"><div class="rev-lbl">Revenue Cadena</div><div class="rev-val">${fmM(tot_rev)}</div></div>
+      <div class="rev-cell"><div class="rev-lbl">Rooms</div><div class="rev-val">${fmM(tot_rooms)}</div></div>
+      <div class="rev-cell"><div class="rev-lbl">A&B</div><div class="rev-val">${fmM(tot_ayb)}</div></div>
+    </div>
+    ${revAABlock(tot_rev,tot_rooms,tot_ayb,tot_raa,tot_rooa,tot_ayba)}
+  </div>`;
 }
 
 function hotelCard(d,tab,fecha){
-  if(!d)return'';
-  const pfx=tab==='dia'?'d_':'m_';const color=d.color;const noK=d.sin_k007&&tab==='dia';
-  if(noK)return'<div class="hotel-card" style="border-top:4px solid var(--amber)"><div class="hotel-header" style="background:#9E6A00"><div><div class="hotel-name">'+d.hotel+'</div><div style="font-size:10px;opacity:.85;margin-top:2px">'+d.hab+' hab · '+d.manager+'</div></div><div class="hotel-meta-r">Sin K007 del '+fecha+'</div></div><div style="padding:20px;text-align:center"><div style="font-size:28px;margin-bottom:8px">⚠️</div><div style="font-size:13px;font-weight:700;color:#9E6A00">Reporte del día no disponible</div></div><div class="rev-strip"><div class="rev-cell"><div class="rev-lbl">Rev. Mes</div><div class="rev-val">'+fmM(d.m_rev)+'</div></div><div class="rev-cell"><div class="rev-lbl">Ocup. Mes</div><div class="rev-val">'+fp(d.m_ocup)+'</div></div><div class="rev-cell"><div class="rev-lbl">ADR Mes</div><div class="rev-val">'+fm(d.m_adr)+'</div></div></div></div>';
+  if(!d) return '';
+  const pfx=tab==='dia'?'d_':'m_';
+  const color=d.color;
+  if(d.sin_k007&&tab==='dia') return `<div class="hotel-card" style="border-top:4px solid var(--amber)">
+    <div class="hotel-header" style="background:#9E6A00"><div><div class="hotel-name">${d.hotel}</div><div style="font-size:10px;opacity:.85;margin-top:2px">${d.hab} hab · ${d.manager}</div></div><div class="hotel-meta-r">Sin K007 del ${fecha}</div></div>
+    <div style="padding:20px;text-align:center"><div style="font-size:28px;margin-bottom:8px">⚠️</div><div style="font-size:13px;font-weight:700;color:#9E6A00">Reporte del día no disponible</div></div>
+    <div class="rev-strip"><div class="rev-cell"><div class="rev-lbl">Rev. Mes</div><div class="rev-val">${fmM(d.m_rev)}</div></div><div class="rev-cell"><div class="rev-lbl">Ocup. Mes</div><div class="rev-val">${fp(d.m_ocup)}</div></div><div class="rev-cell"><div class="rev-lbl">ADR Mes</div><div class="rev-val">${fm(d.m_adr)}</div></div></div>
+  </div>`;
   const oc=d[pfx+'ocup'],adr=d[pfx+'adr'],rp=d[pfx+'revpar'];
   const rev=d[pfx+'rev'],rooms=d[pfx+'rooms'],ayb=d[pfx+'ayb'];
-  const rev_aa=d[pfx+'rev_aa']||0,rooms_aa=d[pfx+'rooms_aa']||0,ayb_aa=d[pfx+'ayb_aa']||0;
+  const raa=d[pfx+'rev_aa']||0,rooa=d[pfx+'rooms_aa']||0,ayba=d[pfx+'ayb_aa']||0;
   const lleg=d[pfx+'lleg'],sal=d[pfx+'sal']||0;
-  const habOcup=d.d_hab_ocup||0,huNeto=Math.max(0,(d.d_hab_ocup||0)-(d.d_house_use||0));
-  const col1=tab==='dia'?'DÍA':'MES ACTUAL';
-  return'<div class="hotel-card" style="border-top:4px solid '+color+'"><div class="hotel-header" style="background:'+color+'"><div><div class="hotel-name">'+d.hotel+'</div><div style="font-size:10px;opacity:.85;margin-top:2px">'+d.hab+' hab · '+d.manager+'</div></div><div class="hotel-meta-r">'+(tab==='dia'?'Día '+fecha:'Mes Acum.')+'</div></div><div class="arr-strip"><div class="arr-cell"><div class="arr-lbl">Llegadas</div><div class="arr-val" style="color:'+color+'">'+lleg+'</div></div><div class="arr-cell"><div class="arr-lbl">Salidas</div><div class="arr-val">'+sal+'</div></div>'+(tab==='dia'?'<div class="arr-cell"><div class="arr-lbl">Hab. Ocup.</div><div class="arr-val">'+huNeto+'</div></div>':'')+'<div class="arr-cell"><div class="arr-lbl">Ocup%</div><div class="arr-val" style="color:'+ocColor(oc)+'">'+fp(oc)+'</div></div></div><div class="kpi-grid"><div class="kpi-col-head kh-dia">'+col1+'</div><div class="kpi-col-head kh-aa">AÑO ANTERIOR</div><div class="kpi-row-label">TARIFA PROMEDIO (ADR)</div><div class="kpi-cell left"><div class="kpi-val" style="color:'+color+'">'+fm(adr)+'</div>'+chipOc(adr,d.aa_adr,'val')+'</div><div class="kpi-cell"><div class="kpi-val" style="color:var(--muted)">'+(d.aa_adr?fm(d.aa_adr):'—')+'</div></div><div class="kpi-row-label">OCUPACIÓN</div><div class="kpi-cell left"><div class="kpi-val" style="color:'+ocColor(oc)+'">'+fp(oc)+'</div>'+chipOc(oc,d.aa_ocup,'pct')+'</div><div class="kpi-cell"><div class="kpi-val" style="color:var(--muted)">'+(d.aa_ocup?fp(d.aa_ocup):'—')+'</div></div><div class="kpi-row-label">REVPAR</div><div class="kpi-cell left"><div class="kpi-val" style="color:'+color+'">'+fm(rp)+'</div>'+chipOc(rp,d.aa_revpar,'val')+'</div><div class="kpi-cell"><div class="kpi-val" style="color:var(--muted)">'+(d.aa_revpar?fm(d.aa_revpar):'—')+'</div></div></div><div class="rev-strip"><div class="rev-cell"><div class="rev-lbl">Revenue</div><div class="rev-val">'+fmM(rev)+'</div></div><div class="rev-cell"><div class="rev-lbl">Rooms</div><div class="rev-val">'+fmM(rooms)+'</div></div><div class="rev-cell"><div class="rev-lbl">A&B</div><div class="rev-val">'+fmM(ayb)+'</div></div></div>'+revAABlock(rev,rooms,ayb,rev_aa,rooms_aa,ayb_aa)+'</div>';
+  const huNeto=Math.max(0,(d.d_hab_ocup||0)-(d.d_house_use||0));
+  return `<div class="hotel-card" style="border-top:4px solid ${color}">
+    <div class="hotel-header" style="background:${color}">
+      <div><div class="hotel-name">${d.hotel}</div><div style="font-size:10px;opacity:.85;margin-top:2px">${d.hab} hab · ${d.manager}</div></div>
+      <div class="hotel-meta-r">${tab==='dia'?'Día '+fecha:'Mes Acum.'}</div>
+    </div>
+    <div class="arr-strip">
+      <div class="arr-cell"><div class="arr-lbl">Llegadas</div><div class="arr-val" style="color:${color}">${lleg}</div></div>
+      <div class="arr-cell"><div class="arr-lbl">Salidas</div><div class="arr-val">${sal}</div></div>
+      ${tab==='dia'?`<div class="arr-cell"><div class="arr-lbl">Hab. Ocup.</div><div class="arr-val">${huNeto}</div></div>`:''}
+      <div class="arr-cell"><div class="arr-lbl">Ocup%</div><div class="arr-val" style="color:${ocColor(oc)}">${fp(oc)}</div></div>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi-col-head kh-dia">${tab==='dia'?'DÍA':'MES ACTUAL'}</div>
+      <div class="kpi-col-head kh-aa">AÑO ANTERIOR</div>
+      <div class="kpi-row-label">TARIFA PROMEDIO (ADR)</div>
+      <div class="kpi-cell left"><div class="kpi-val" style="color:${color}">${fm(adr)}</div>${chipOc(adr,d.aa_adr,'val')}</div>
+      <div class="kpi-cell"><div class="kpi-val" style="color:var(--muted)">${d.aa_adr?fm(d.aa_adr):'—'}</div></div>
+      <div class="kpi-row-label">OCUPACIÓN</div>
+      <div class="kpi-cell left"><div class="kpi-val" style="color:${ocColor(oc)}">${fp(oc)}</div>${chipOc(oc,d.aa_ocup,'pct')}</div>
+      <div class="kpi-cell"><div class="kpi-val" style="color:var(--muted)">${d.aa_ocup?fp(d.aa_ocup):'—'}</div></div>
+      <div class="kpi-row-label">REVPAR</div>
+      <div class="kpi-cell left"><div class="kpi-val" style="color:${color}">${fm(rp)}</div>${chipOc(rp,d.aa_revpar,'val')}</div>
+      <div class="kpi-cell"><div class="kpi-val" style="color:var(--muted)">${d.aa_revpar?fm(d.aa_revpar):'—'}</div></div>
+    </div>
+    <div class="rev-strip">
+      <div class="rev-cell"><div class="rev-lbl">Revenue</div><div class="rev-val">${fmM(rev)}</div></div>
+      <div class="rev-cell"><div class="rev-lbl">Rooms</div><div class="rev-val">${fmM(rooms)}</div></div>
+      <div class="rev-cell"><div class="rev-lbl">A&B</div><div class="rev-val">${fmM(ayb)}</div></div>
+    </div>
+    ${revAABlock(rev,rooms,ayb,raa,rooa,ayba)}
+  </div>`;
 }
 
 function cargarFecha(fecha){
   document.getElementById('fecha-badge').textContent=fecha;
   renderAlertas(fecha);
   const data=DB[fecha]||{};
-  document.getElementById('sub-dia-cad').textContent='Consolidado 4 hoteles · '+fecha;
-  document.getElementById('sub-dia-hot').textContent='Detalle individual · '+fecha;
-  document.getElementById('sub-mes-cad').textContent='Mes acumulado · '+fecha;
+  document.getElementById('sub-dia-cad').textContent=`Consolidado 4 hoteles · ${fecha}`;
+  document.getElementById('sub-dia-hot').textContent=`Detalle individual · ${fecha}`;
+  document.getElementById('sub-mes-cad').textContent=`Mes acumulado · ${fecha}`;
   document.getElementById('sub-mes-hot').textContent='Detalle individual · mes acumulado';
   document.getElementById('cont-dia-cad').innerHTML=cadenaBlock(fecha,'dia');
   document.getElementById('cont-dia-hot').innerHTML=HOTELES.map(h=>hotelCard(data[h.nombre],'dia',fecha)).join('');
@@ -322,42 +420,67 @@ function cargarFecha(fecha){
 }
 
 // ── EJECUTIVO ─────────────────────────────────────────────────────────────────
-const CHART_OPT={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{family:'Lato',size:9},maxRotation:45},grid:{color:'rgba(0,0,0,0.04)'}},y:{ticks:{font:{family:'Lato',size:9}},grid:{color:'rgba(0,0,0,0.04)'}}}};
+const COPT={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{family:'Lato',size:9},maxRotation:45},grid:{color:'rgba(0,0,0,0.04)'}},y:{ticks:{font:{family:'Lato',size:9}},grid:{color:'rgba(0,0,0,0.04)'}}}};
 let charts={};
-function dc(id){if(charts[id]){charts[id].destroy();delete charts[id]}}
+const dc=id=>{if(charts[id]){charts[id].destroy();delete charts[id]}};
+
+function lineDS(key){
+  return HOTELES_EJ.map(h=>({
+    label:h.nombre.replace('Howard Johnson ','HJ '),
+    data:(key==='ocup'?SERIES_OCUP:key==='adr'?SERIES_ADR:key==='rp'?SERIES_RP:SERIES_REV)[h.nombre],
+    borderColor:h.color,backgroundColor:h.color+'22',
+    borderWidth:2.5,pointRadius:4,tension:0.3,spanGaps:true
+  }));
+}
 
 function buildEvolucion(){
-  dc('c-ocup');
-  charts['c-ocup']=new Chart(document.getElementById('c-ocup').getContext('2d'),{type:'line',data:{labels:MESES_EJ,datasets:HOTELES_EJ.map(h=>({label:h.nombre.replace('Howard Johnson ','HJ '),data:SERIES_OCUP[h.nombre],borderColor:h.color,backgroundColor:h.color+'22',borderWidth:2.5,pointRadius:4,tension:0.3,spanGaps:true}))},options:{...CHART_OPT,plugins:{...CHART_OPT.plugins,tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+ctx.parsed.y+'%'}}},scales:{...CHART_OPT.scales,y:{...CHART_OPT.scales.y,ticks:{...CHART_OPT.scales.y.ticks,callback:v=>v+'%'}}}}});
-  dc('c-adr');
-  charts['c-adr']=new Chart(document.getElementById('c-adr').getContext('2d'),{type:'line',data:{labels:MESES_EJ,datasets:HOTELES_EJ.map(h=>({label:h.nombre.replace('Howard Johnson ','HJ '),data:SERIES_ADR[h.nombre],borderColor:h.color,backgroundColor:h.color+'22',borderWidth:2.5,pointRadius:4,tension:0.3,spanGaps:true}))},options:{...CHART_OPT,plugins:{...CHART_OPT.plugins,tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': $'+ctx.parsed.y+'k'}}},scales:{...CHART_OPT.scales,y:{...CHART_OPT.scales.y,ticks:{...CHART_OPT.scales.y.ticks,callback:v=>'$'+v+'k'}}}}});
-  dc('c-rp');
-  charts['c-rp']=new Chart(document.getElementById('c-rp').getContext('2d'),{type:'line',data:{labels:MESES_EJ,datasets:HOTELES_EJ.map(h=>({label:h.nombre.replace('Howard Johnson ','HJ '),data:SERIES_RP[h.nombre],borderColor:h.color,backgroundColor:h.color+'22',borderWidth:2.5,pointRadius:4,tension:0.3,spanGaps:true}))},options:{...CHART_OPT,plugins:{...CHART_OPT.plugins,tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': $'+ctx.parsed.y+'k'}}},scales:{...CHART_OPT.scales,y:{...CHART_OPT.scales.y,ticks:{...CHART_OPT.scales.y.ticks,callback:v=>'$'+v+'k'}}}}});
-  dc('c-rev');
-  charts['c-rev']=new Chart(document.getElementById('c-rev').getContext('2d'),{type:'bar',data:{labels:MESES_EJ,datasets:HOTELES_EJ.map(h=>({label:h.nombre.replace('Howard Johnson ','HJ '),data:SERIES_REV[h.nombre],backgroundColor:h.color+'CC',borderRadius:4,stack:'rev'}))},options:{...CHART_OPT,plugins:{...CHART_OPT.plugins,tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': $'+ctx.parsed.y+'M'}}},scales:{...CHART_OPT.scales,x:{...CHART_OPT.scales.x,stacked:true},y:{...CHART_OPT.scales.y,stacked:true,ticks:{...CHART_OPT.scales.y.ticks,callback:v=>'$'+v+'M'}}}}});
+  dc('c-ocup');charts['c-ocup']=new Chart(document.getElementById('c-ocup'),{type:'line',data:{labels:MESES_EJ,datasets:lineDS('ocup')},options:{...COPT,plugins:{...COPT.plugins,tooltip:{callbacks:{label:c=>c.dataset.label+': '+c.parsed.y+'%'}}},scales:{...COPT.scales,y:{...COPT.scales.y,ticks:{...COPT.scales.y.ticks,callback:v=>v+'%'}}}}});
+  dc('c-adr');charts['c-adr']=new Chart(document.getElementById('c-adr'),{type:'line',data:{labels:MESES_EJ,datasets:lineDS('adr')},options:{...COPT,plugins:{...COPT.plugins,tooltip:{callbacks:{label:c=>c.dataset.label+': $'+c.parsed.y+'k'}}},scales:{...COPT.scales,y:{...COPT.scales.y,ticks:{...COPT.scales.y.ticks,callback:v=>'$'+v+'k'}}}}});
+  dc('c-rp');charts['c-rp']=new Chart(document.getElementById('c-rp'),{type:'line',data:{labels:MESES_EJ,datasets:lineDS('rp')},options:{...COPT,plugins:{...COPT.plugins,tooltip:{callbacks:{label:c=>c.dataset.label+': $'+c.parsed.y+'k'}}},scales:{...COPT.scales,y:{...COPT.scales.y,ticks:{...COPT.scales.y.ticks,callback:v=>'$'+v+'k'}}}}});
+  dc('c-rev');charts['c-rev']=new Chart(document.getElementById('c-rev'),{type:'bar',data:{labels:MESES_EJ,datasets:HOTELES_EJ.map(h=>({label:h.nombre.replace('Howard Johnson ','HJ '),data:SERIES_REV[h.nombre],backgroundColor:h.color+'CC',borderRadius:4,stack:'rev'}))},options:{...COPT,plugins:{...COPT.plugins,tooltip:{callbacks:{label:c=>c.dataset.label+': $'+c.parsed.y+'M'}}},scales:{...COPT.scales,x:{...COPT.scales.x,stacked:true},y:{...COPT.scales.y,stacked:true,ticks:{...COPT.scales.y.ticks,callback:v=>'$'+v+'M'}}}}});
 }
 
 function buildBenchmark(){
-  dc('b-ocup');charts['b-ocup']=new Chart(document.getElementById('b-ocup').getContext('2d'),{type:'bar',data:{labels:HOTELES_EJ.map(h=>h.nombre.replace('Howard Johnson ','HJ ')),datasets:[{data:HOTELES_EJ.map(h=>BENCH[h.nombre]?parseFloat(BENCH[h.nombre]['Mes_Ocup']||0):0),backgroundColor:HOTELES_EJ.map(h=>h.color+'CC'),borderRadius:6,barPercentage:0.6}]},options:{...CHART_OPT,plugins:{...CHART_OPT.plugins,tooltip:{callbacks:{label:ctx=>'Ocup: '+ctx.parsed.y+'%'}}},scales:{...CHART_OPT.scales,y:{...CHART_OPT.scales.y,max:100,ticks:{...CHART_OPT.scales.y.ticks,callback:v=>v+'%'}}}}});
-  dc('b-adr');charts['b-adr']=new Chart(document.getElementById('b-adr').getContext('2d'),{type:'bar',data:{labels:HOTELES_EJ.map(h=>h.nombre.replace('Howard Johnson ','HJ ')),datasets:[{data:HOTELES_EJ.map(h=>BENCH[h.nombre]?Math.round(parseFloat(BENCH[h.nombre]['Mes_ADR']||0)/1000*10)/10:0),backgroundColor:HOTELES_EJ.map(h=>h.color+'CC'),borderRadius:6,barPercentage:0.6}]},options:{...CHART_OPT,plugins:{...CHART_OPT.plugins,tooltip:{callbacks:{label:ctx=>'ADR: $'+ctx.parsed.y+'k'}}},scales:{...CHART_OPT.scales,y:{...CHART_OPT.scales.y,ticks:{...CHART_OPT.scales.y.ticks,callback:v=>'$'+v+'k'}}}}});
-  dc('b-rp');charts['b-rp']=new Chart(document.getElementById('b-rp').getContext('2d'),{type:'bar',data:{labels:HOTELES_EJ.map(h=>h.nombre.replace('Howard Johnson ','HJ ')),datasets:[{data:HOTELES_EJ.map(h=>BENCH[h.nombre]?Math.round(parseFloat(BENCH[h.nombre]['Mes_RevPAR']||0)/1000*10)/10:0),backgroundColor:HOTELES_EJ.map(h=>h.color+'CC'),borderRadius:6,barPercentage:0.6}]},options:{...CHART_OPT,plugins:{...CHART_OPT.plugins,tooltip:{callbacks:{label:ctx=>'RevPAR: $'+ctx.parsed.y+'k'}}},scales:{...CHART_OPT.scales,y:{...CHART_OPT.scales.y,ticks:{...CHART_OPT.scales.y.ticks,callback:v=>'$'+v+'k'}}}}});
+  const labels=HOTELES_EJ.map(h=>h.nombre.replace('Howard Johnson ','HJ '));
+  const bColors=HOTELES_EJ.map(h=>h.color+'CC');
+  dc('b-ocup');charts['b-ocup']=new Chart(document.getElementById('b-ocup'),{type:'bar',data:{labels,datasets:[{data:HOTELES_EJ.map(h=>BENCH[h.nombre]?+BENCH[h.nombre].Mes_Ocup||0:0),backgroundColor:bColors,borderRadius:6,barPercentage:0.6}]},options:{...COPT,plugins:{...COPT.plugins,tooltip:{callbacks:{label:c=>'Ocup: '+c.parsed.y+'%'}}},scales:{...COPT.scales,y:{...COPT.scales.y,max:100,ticks:{...COPT.scales.y.ticks,callback:v=>v+'%'}}}}});
+  dc('b-adr');charts['b-adr']=new Chart(document.getElementById('b-adr'),{type:'bar',data:{labels,datasets:[{data:HOTELES_EJ.map(h=>BENCH[h.nombre]?Math.round(+BENCH[h.nombre].Mes_ADR/1000*10)/10:0),backgroundColor:bColors,borderRadius:6,barPercentage:0.6}]},options:{...COPT,plugins:{...COPT.plugins,tooltip:{callbacks:{label:c=>'ADR: $'+c.parsed.y+'k'}}},scales:{...COPT.scales,y:{...COPT.scales.y,ticks:{...COPT.scales.y.ticks,callback:v=>'$'+v+'k'}}}}});
+  dc('b-rp');charts['b-rp']=new Chart(document.getElementById('b-rp'),{type:'bar',data:{labels,datasets:[{data:HOTELES_EJ.map(h=>BENCH[h.nombre]?Math.round(+BENCH[h.nombre].Mes_RevPAR/1000*10)/10:0),backgroundColor:bColors,borderRadius:6,barPercentage:0.6}]},options:{...COPT,plugins:{...COPT.plugins,tooltip:{callbacks:{label:c=>'RevPAR: $'+c.parsed.y+'k'}}},scales:{...COPT.scales,y:{...COPT.scales.y,ticks:{...COPT.scales.y.ticks,callback:v=>'$'+v+'k'}}}}});
   const bc=document.getElementById('bench-cards');
-  bc.innerHTML=HOTELES_EJ.map(h=>{const d=BENCH[h.nombre];if(!d)return'';const oc=parseFloat(d['Mes_Ocup']||0);return'<div class="bench-card" style="border-top:3px solid '+h.color+'"><div class="bench-name" style="color:'+h.color+'">'+h.nombre.replace('Howard Johnson ','HJ ')+'<br><span style="font-weight:400;color:var(--muted);font-size:9px">'+h.hab+' hab</span></div><div class="bench-kpi"><span class="bench-lbl">Ocup.</span><span class="bench-val '+(oc>=50?'oc-high':oc>=30?'oc-mid':'oc-low')+'">'+oc.toFixed(1)+'%</span></div><div class="bench-kpi"><span class="bench-lbl">ADR</span><span class="bench-val">$'+Math.round(parseFloat(d['Mes_ADR']||0)).toLocaleString('es-AR')+'</span></div><div class="bench-kpi"><span class="bench-lbl">RevPAR</span><span class="bench-val">$'+Math.round(parseFloat(d['Mes_RevPAR']||0)).toLocaleString('es-AR')+'</span></div><div class="bench-kpi"><span class="bench-lbl">Revenue</span><span class="bench-val">$'+(parseFloat(d['Mes_Rev']||0)/1e6).toFixed(1)+'M</span></div></div>'}).join('');
-  const ocups=HOTELES_EJ.map(h=>({nombre:h.nombre.replace('Howard Johnson ','HJ '),oc:BENCH[h.nombre]?parseFloat(BENCH[h.nombre]['Mes_Ocup']||0):0}));
-  const best=ocups.reduce((a,b)=>b.oc>a.oc?b:a);
-  const worst=ocups.reduce((a,b)=>b.oc<a.oc?b:a);
-  const bestADR=HOTELES_EJ.map(h=>({nombre:h.nombre.replace('Howard Johnson ','HJ '),adr:BENCH[h.nombre]?parseFloat(BENCH[h.nombre]['Mes_ADR']||0):0})).reduce((a,b)=>b.adr>a.adr?b:a);
-  document.getElementById('bench-insights').innerHTML='<div class="insight-box"><div class="insight-title">🏆 Mejor ocupación</div><div class="insight-text"><strong>'+best.nombre+'</strong> lidera con '+best.oc.toFixed(1)+'% de ocupación mensual.</div></div><div class="insight-box"><div class="insight-title">💰 Mayor tarifa</div><div class="insight-text"><strong>'+bestADR.nombre+'</strong> tiene el ADR más alto: $'+Math.round(bestADR.adr).toLocaleString('es-AR')+'.</div></div><div class="insight-box"><div class="insight-title">📉 Oportunidad</div><div class="insight-text"><strong>'+worst.nombre+'</strong> tiene la ocupación más baja ('+worst.oc.toFixed(1)+'%). Revisar estrategia de pricing y distribución.</div></div>';
+  bc.innerHTML=HOTELES_EJ.map(h=>{
+    const d=BENCH[h.nombre]; if(!d) return '';
+    const oc=+d.Mes_Ocup||0;
+    return `<div class="bench-card" style="border-top:3px solid ${h.color}">
+      <div class="bench-name" style="color:${h.color}">${h.nombre.replace('Howard Johnson ','HJ ')}<br><span style="font-weight:400;color:var(--muted);font-size:9px">${h.hab} hab</span></div>
+      <div class="bench-kpi"><span class="bench-lbl">Ocup.</span><span class="bench-val ${oc>=50?'oc-high':oc>=30?'oc-mid':'oc-low'}">${oc.toFixed(1)}%</span></div>
+      <div class="bench-kpi"><span class="bench-lbl">ADR</span><span class="bench-val">$${Math.round(+d.Mes_ADR||0).toLocaleString('es-AR')}</span></div>
+      <div class="bench-kpi"><span class="bench-lbl">RevPAR</span><span class="bench-val">$${Math.round(+d.Mes_RevPAR||0).toLocaleString('es-AR')}</span></div>
+      <div class="bench-kpi"><span class="bench-lbl">Revenue</span><span class="bench-val">$${((+d.Mes_Rev||0)/1e6).toFixed(1)}M</span></div>
+    </div>`;
+  }).join('');
+  const ocups=HOTELES_EJ.map(h=>({n:h.nombre.replace('Howard Johnson ','HJ '),v:BENCH[h.nombre]?+BENCH[h.nombre].Mes_Ocup||0:0}));
+  const adrs =HOTELES_EJ.map(h=>({n:h.nombre.replace('Howard Johnson ','HJ '),v:BENCH[h.nombre]?+BENCH[h.nombre].Mes_ADR||0:0}));
+  const best=ocups.reduce((a,b)=>b.v>a.v?b:a);
+  const worst=ocups.reduce((a,b)=>b.v<a.v?b:a);
+  const bestA=adrs.reduce((a,b)=>b.v>a.v?b:a);
+  document.getElementById('bench-insights').innerHTML=`
+    <div class="insight-box"><div class="insight-title">🏆 Mejor ocupación</div><div class="insight-text"><strong>${best.n}</strong> lidera con ${best.v.toFixed(1)}% de ocupación mensual.</div></div>
+    <div class="insight-box"><div class="insight-title">💰 Mayor tarifa</div><div class="insight-text"><strong>${bestA.n}</strong> tiene el ADR más alto: $${Math.round(bestA.v).toLocaleString('es-AR')}.</div></div>
+    <div class="insight-box"><div class="insight-title">📉 Oportunidad</div><div class="insight-text"><strong>${worst.n}</strong> tiene la ocupación más baja (${worst.v.toFixed(1)}%). Revisar estrategia de pricing y distribución.</div></div>`;
 }
 
 function buildScatter(){
   dc('s-scatter');
-  charts['s-scatter']=new Chart(document.getElementById('s-scatter').getContext('2d'),{type:'scatter',data:{datasets:SCATTER.map(h=>({label:h.nombre.replace('Howard Johnson ','HJ '),data:h.puntos.map(p=>({x:p.x,y:p.y,mes:p.mes})),backgroundColor:h.color+'BB',borderColor:h.color,borderWidth:1.5,pointRadius:7,pointHoverRadius:9}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>[ctx.dataset.label,ctx.raw.mes,'Ocup: '+ctx.parsed.x+'%','ADR: $'+ctx.parsed.y+'k']}}},scales:{x:{title:{display:true,text:'Ocupación (%)',font:{family:'Lato',size:10}},ticks:{font:{family:'Lato',size:9},callback:v=>v+'%'},grid:{color:'rgba(0,0,0,0.04)'}},y:{title:{display:true,text:'ADR (miles $)',font:{family:'Lato',size:10}},ticks:{font:{family:'Lato',size:9},callback:v=>'$'+v+'k'},grid:{color:'rgba(0,0,0,0.04)'}}}}});
+  charts['s-scatter']=new Chart(document.getElementById('s-scatter'),{type:'scatter',
+    data:{datasets:SCATTER.map(h=>({label:h.nombre.replace('Howard Johnson ','HJ '),data:h.puntos.map(p=>({x:p.x,y:p.y,mes:p.mes})),backgroundColor:h.color+'BB',borderColor:h.color,borderWidth:1.5,pointRadius:7,pointHoverRadius:9}))},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>[c.dataset.label,c.raw.mes,'Ocup: '+c.parsed.x+'%','ADR: $'+c.parsed.y+'k']}}},
+      scales:{x:{title:{display:true,text:'Ocupación (%)',font:{family:'Lato',size:10}},ticks:{font:{family:'Lato',size:9},callback:v=>v+'%'},grid:{color:'rgba(0,0,0,0.04)'}},
+              y:{title:{display:true,text:'ADR (miles $)',font:{family:'Lato',size:10}},ticks:{font:{family:'Lato',size:9},callback:v=>'$'+v+'k'},grid:{color:'rgba(0,0,0,0.04)'}}}}});
   document.getElementById('scatter-insight').innerHTML='<div class="insight-box"><div class="insight-title">📊 Cómo leer este gráfico</div><div class="insight-text">Cada punto es un hotel en un mes. <strong>Arriba a la derecha</strong> = alta ocupación + alta tarifa (ideal). La zona ideal es ocupación >50% con ADR alto.</div></div>';
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
-cargarFecha(FECHAS[0]);
+if(FECHAS.length) cargarFecha(FECHAS[0]);
 </script>
 </body>
 </html>
