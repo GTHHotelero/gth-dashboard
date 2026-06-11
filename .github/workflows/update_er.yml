@@ -1,9 +1,7 @@
 name: Update E/R Dashboard
 
 on:
-  # Manual trigger
   workflow_dispatch:
-  # Auto: 1st of every month at 9am Argentina time (12:00 UTC)
   schedule:
     - cron: '0 12 1 * *'
 
@@ -14,6 +12,8 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GH_TOKEN }}
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -27,7 +27,7 @@ jobs:
       - name: Generate E/R Dashboard
         env:
           GDRIVE_SERVICE_ACCOUNT_JSON: ${{ secrets.GDRIVE_SERVICE_ACCOUNT_JSON }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           ER_EXCEL_FILE_ID: 1giqR1a-KE6PD-WtrkR70uiuTDjWVRDsV
         run: python er_generator.py
 
@@ -35,6 +35,7 @@ jobs:
         run: |
           git config user.name "GTH Bot"
           git config user.email "bot@gth.com"
+          git remote set-url origin https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/GTHHotelero/gth-dashboard.git
           git add GTH_ER_Dashboard.html
           git diff --cached --quiet || git commit -m "Auto-update E/R Dashboard $(date +'%Y-%m-%d')"
           git push
