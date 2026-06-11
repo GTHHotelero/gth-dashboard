@@ -12,11 +12,11 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 import io, requests
 
-# ââ CONFIG ââ
+# Ã¢ÂÂÃ¢ÂÂ CONFIG Ã¢ÂÂÃ¢ÂÂ
 FILE_ID = os.environ.get('ER_EXCEL_FILE_ID', '1giqR1a-KE6PD-WtrkR70uiuTDjWVRDsV')
 OUTPUT_HTML = 'GTH_ER_Dashboard.html'
 
-# ââ GOOGLE DRIVE AUTH ââ
+# Ã¢ÂÂÃ¢ÂÂ GOOGLE DRIVE AUTH Ã¢ÂÂÃ¢ÂÂ
 def get_drive_service():
     creds_json = os.environ.get('GDRIVE_SERVICE_ACCOUNT_JSON') or os.environ.get('GOOGLE_CREDENTIALS_JSON')
     if not creds_json:
@@ -39,7 +39,7 @@ def download_excel(file_id):
     buf.seek(0)
     return buf
 
-# ââ DATA EXTRACTION ââ
+# Ã¢ÂÂÃ¢ÂÂ DATA EXTRACTION Ã¢ÂÂÃ¢ÂÂ
 MONTHS_ORDER = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
                 'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
 MONTHS_UPPER = [m.upper() for m in MONTHS_ORDER]
@@ -97,7 +97,7 @@ def gv_cell(df, ridx, ci, is_pct=False):
     if isinstance(v, float) and np.isnan(v): return 0.0
     if isinstance(v, str):
         s = v.replace(',','').replace('%','').strip()
-        if s in ('','#Â¡DIV/0!','#DIV/0!'): return 0.0
+        if s in ('','#ÃÂ¡DIV/0!','#DIV/0!'): return 0.0
         try: f = float(s)
         except: return 0.0
     else:
@@ -124,7 +124,7 @@ ER_LABELS = {
 HAB_LABELS = {
     'hab_dis':  'Habitaciones disponibles',
     'hab_occ':  'Habitaciones ocupadas',
-    'occ_pct':  ['%  ocupaciÃ³n', '% ocupaciÃ³n'],
+    'occ_pct':  ['%  ocupaciÃÂ³n', '% ocupaciÃÂ³n'],
     'adr':      'Tarifa promedio',
 }
 
@@ -183,7 +183,7 @@ def process_excel(buf):
     # Sheet configs: name -> (hotel_name, er_month_row, er_year_row, hab_month_row, hab_year_row)
     SHEET_CONFIG = {
         'HJ RESISTENCIA': ('Howard Johnson La Ribera', 5, 6, None, None),
-        'HJ CARILO':      ('Howard Johnson CarilÃ³',   210, 211, 5, 6),
+        'HJ CARILO':      ('Howard Johnson CarilÃÂ³',   210, 211, 5, 6),
         'SOHO':           ('Soho Suites',              70, 71, 5, 6),
     }
 
@@ -194,7 +194,7 @@ def process_excel(buf):
         hotel_name, emr, eyr, hmr, hyr = SHEET_CONFIG[sheet]
         print(f"  Processing {sheet} -> {hotel_name}")
         df = pd.read_excel(buf, sheet_name=sheet, header=None)
-        key = hotel_name.replace('Howard Johnson ', 'HJ ').replace('CarilÃ³','CarilÃ³')
+        key = hotel_name.replace('Howard Johnson ', 'HJ ').replace('CarilÃÂ³','CarilÃÂ³')
         hotels[key] = extract_hotel(df, hotel_name, emr, eyr, hmr, hyr)
         for y, yd in hotels[key]['years'].items():
             a = yd['annual']; vt = a['v_total']
@@ -203,7 +203,7 @@ def process_excel(buf):
 
     return hotels
 
-# ââ HTML GENERATION ââ
+# Ã¢ÂÂÃ¢ÂÂ HTML GENERATION Ã¢ÂÂÃ¢ÂÂ
 def generate_html(hotels, logo_b64=None):
     hotels_js = json.dumps(hotels, ensure_ascii=False)
     logo_src = f"data:image/svg+xml;base64,{logo_b64}" if logo_b64 else ""
@@ -217,7 +217,7 @@ def generate_html(hotels, logo_b64=None):
     html = html.replace('__LOGO_SRC__', logo_src)
     return html
 
-# ââ GITHUB UPLOAD ââ
+# Ã¢ÂÂÃ¢ÂÂ GITHUB UPLOAD Ã¢ÂÂÃ¢ÂÂ
 def upload_to_github(html_content, filename=OUTPUT_HTML):
     token = os.environ.get('GTH_TOKEN') or os.environ.get('GITHUB_TOKEN')
     repo  = os.environ.get('GITHUB_REPOSITORY', 'GTHHotelero/gth-dashboard')
@@ -243,12 +243,12 @@ def upload_to_github(html_content, filename=OUTPUT_HTML):
 
     r = requests.put(api_url, headers=headers, json=payload)
     if r.status_code in (200, 201):
-        print(f"â {filename} uploaded successfully")
+        print(f"Ã¢ÂÂ {filename} uploaded successfully")
     else:
-        print(f"â Upload failed: {r.status_code} {r.text[:200]}")
+        print(f"Ã¢ÂÂ Upload failed: {r.status_code} {r.text[:200]}")
         sys.exit(1)
 
-# ââ MAIN ââ
+# Ã¢ÂÂÃ¢ÂÂ MAIN Ã¢ÂÂÃ¢ÂÂ
 if __name__ == '__main__':
     print("GTH E/R Dashboard Generator")
     print(f"Downloading Excel from Drive (file_id={FILE_ID})...")
@@ -267,6 +267,7 @@ if __name__ == '__main__':
     print("Generating HTML...")
     html = generate_html(hotels, logo_b64)
 
-    print("Uploading to GitHub...")
-    upload_to_github(html)
-    print("Done!")
+    print("Writing HTML to disk...")
+    with open(OUTPUT_HTML, 'w', encoding='utf-8') as f:
+        f.write(html)
+    print(f"Done! {OUTPUT_HTML} written ({len(html):,} bytes)")
