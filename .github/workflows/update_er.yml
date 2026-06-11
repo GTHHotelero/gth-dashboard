@@ -8,7 +8,6 @@ on:
 jobs:
   update:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
@@ -25,6 +24,6 @@ jobs:
       - name: Generate and upload E/R Dashboard
         env:
           GDRIVE_SERVICE_ACCOUNT_JSON: ${{ secrets.GDRIVE_SERVICE_ACCOUNT_JSON }}
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          GTH_TOKEN: ${{ secrets.GH_TOKEN }}
           ER_EXCEL_FILE_ID: 1giqR1a-KE6PD-WtrkR70uiuTDjWVRDsV
         run: python er_generator.py
