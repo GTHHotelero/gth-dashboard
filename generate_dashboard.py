@@ -401,9 +401,13 @@ def build_ejecutivo_data(csv_data):
 # ── HTML builders ─────────────────────────────────────────────────────────────
 
 def replace_const(html, name, value):
-    start = html.find(f'const {name} = ')
-    if start == -1: return html
-    end = html.find(';\n', start) + 2
+    import re as _re
+    m = _re.search(rf'const {_re.escape(name)}\s*=\s*', html)
+    if not m:
+        print(f"  ⚠️ replace_const: no encontró 'const {name}'", flush=True)
+        return html
+    start = m.start()
+    end = html.find(';\n', m.end()) + 2
     return html[:start] + f'const {name} = {value};\n' + html[end:]
 
 def replace_text(html, marker, value):
