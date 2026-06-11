@@ -230,13 +230,13 @@ const FECHAS = [];
 const HOTELES = [];
 const MESES_EJ = [];
 const SERIES_OCUP = {};
-const SERIES_ADR  = {};
-const SERIES_RP   = {};
-const SERIES_REV  = {};
-const BENCH       = {};
-const SCATTER     = [];
-const HAB_TOTAL   = 346;
-const HOTELES_EJ  = [
+const SERIES_ADR = {};
+const SERIES_RP = {};
+const SERIES_REV = {};
+const BENCH = {};
+const SCATTER = [];
+const HAB_TOTAL = 346;
+const HOTELES_EJ = [
   {"nombre":"HJ Plaza La Ribera",    "color":"#378ADD","hab":104},
   {"nombre":"Howard Johnson Cariló", "color":"#1D9E75","hab":120},
   {"nombre":"Soho Park",             "color":"#D85A30","hab":43},
@@ -244,9 +244,9 @@ const HOTELES_EJ  = [
 ];
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
-const fm  = v => v ? '$ '+Math.round(v).toLocaleString('es-AR') : '—';
+const fm = v => v ? '$ '+Math.round(v).toLocaleString('es-AR') : '—';
 const fmM = v => v ? '$ '+(v/1e6).toFixed(1)+'M' : '—';
-const fp  = v => (v!==undefined&&v!==null) ? v.toFixed(1)+'%' : '—';
+const fp = v => (v!==undefined&&v!==null) ? v.toFixed(1)+'%' : '—';
 const ocColor = v => v>=50?'var(--pos)':v<20?'var(--neg)':'var(--amber)';
 
 function varPct(a,b){
