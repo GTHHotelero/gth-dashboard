@@ -18,9 +18,9 @@ OUTPUT_HTML = 'GTH_ER_Dashboard.html'
 
 # ── GOOGLE DRIVE AUTH ──
 def get_drive_service():
-    creds_json = os.environ.get('GOOGLE_CREDENTIALS_JSON')
+    creds_json = os.environ.get('GDRIVE_SERVICE_ACCOUNT_JSON') or os.environ.get('GOOGLE_CREDENTIALS_JSON')
     if not creds_json:
-        raise ValueError("GOOGLE_CREDENTIALS_JSON not set")
+        raise ValueError("GDRIVE_SERVICE_ACCOUNT_JSON not set")
     creds_info = json.loads(creds_json)
     creds = Credentials.from_service_account_info(
         creds_info,
