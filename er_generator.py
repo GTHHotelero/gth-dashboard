@@ -124,7 +124,7 @@ ER_LABELS = {
 HAB_LABELS = {
     'hab_dis':  'Habitaciones disponibles',
     'hab_occ':  'Habitaciones ocupadas',
-    'occ_pct':  ['%  ocupacion', '% ocupacion',% ocupación','%  ocupación','% Ocupación','%  Ocupación','Porcentaje de ocupación','Ocupación','% ocupacion','%  ocupacion',],
+    'occ_pct':  ['%  ocupacion', '% ocupacion','% ocupación','%  ocupación','% Ocupación','%  Ocupación','Porcentaje de ocupación','Ocupación','% ocupacion','%  ocupacion',],
     'adr':      'Tarifa promedio',
 }
 
