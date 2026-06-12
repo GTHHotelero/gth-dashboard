@@ -209,7 +209,7 @@ def generate_html(hotels, logo_b64=None):
     logo_src = f"data:image/svg+xml;base64,{logo_b64}" if logo_b64 else ""
 
     # Read template
-    template_path = os.path.join(os.path.dirname(__file__), 'er_template.html')
+    template_path = 'er_template.html'
     with open(template_path, 'r', encoding='utf-8') as f:
         template = f.read()
 
@@ -259,7 +259,7 @@ if __name__ == '__main__':
 
     # Load logo if available
     logo_b64 = None
-    logo_path = os.path.join(os.path.dirname(__file__), 'logo-gth.b64')
+    logo_path = 'logo-gth.b64'
     if os.path.exists(logo_path):
         with open(logo_path, 'r') as f:
             logo_b64 = f.read().strip()
