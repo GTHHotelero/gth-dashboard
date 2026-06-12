@@ -199,7 +199,7 @@ def process_excel(buf):
         for y, yd in hotels[key]['years'].items():
             a = yd['annual']; vt = a['v_total']
             if vt:
-                print(f"    {y} ({int(a['meses'])}m): Ventas={vt/1e6:.0f}M  GOP={a['gop']/vt*100:.1f}%  Occ={a['occ_pct']*100:.0f}%")
+                print(f"    {y} ({int(a['meses'])}m): Ventas={vt/1e6:.0f}M  GOP={a['gop']/vt*100:.1f}%")
 
     return hotels
 
