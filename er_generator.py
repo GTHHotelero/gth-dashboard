@@ -194,7 +194,7 @@ def process_excel(buf):
         hotel_name, emr, eyr, hmr, hyr = SHEET_CONFIG[sheet]
         print(f"  Processing {sheet} -> {hotel_name}")
         df = pd.read_excel(buf, sheet_name=sheet, header=None)
-        key = hotel_name.replace('Howard Johnson ', 'HJ ').replace('CarilÃÂ³','CarilÃÂ³')
+        key = hotel_name.replace('Howard Johnson ', 'HJ ').replace('Carilo','Carilo')
         hotels[key] = extract_hotel(df, hotel_name, emr, eyr, hmr, hyr)
         for y, yd in hotels[key]['years'].items():
             a = yd['annual']; vt = a['v_total']
