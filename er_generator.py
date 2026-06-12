@@ -183,7 +183,7 @@ def process_excel(buf):
     # Sheet configs: name -> (hotel_name, er_month_row, er_year_row, hab_month_row, hab_year_row)
     SHEET_CONFIG = {
         'HJ RESISTENCIA': ('Howard Johnson La Ribera', 5, 6, None, None),
-        'HJ CARILO':      ('Howard Johnson CarilÃÂ³',   210, 211, 5, 6),
+        'HJ CARILO':      ('Howard Johnson Carilo',   210, 211, 5, 6),
         'SOHO':           ('Soho Suites',              70, 71, 5, 6),
     }
 
