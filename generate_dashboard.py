@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GTH Dashboard Generator — GitHub Actions — v5 (Comply Día+Mes, BBA validado)"""
+"""GTH Dashboard Generator — GitHub Actions — v6 (fix migración CSV legacy)"""
 import os, sys, json, base64, datetime, urllib.request, urllib.error, csv, io, re
 from collections import defaultdict
 
@@ -20,11 +20,6 @@ HOTEL_INFO = {
 }
 HOTELES_LIST = ["HJ Plaza La Ribera","Howard Johnson Cariló","Soho Park","HJ Bahia Blanca"]
 
-# v5: 4 columnas nuevas al final (Mes_Hab_Ocup, Mes_House_Use, Mes_Complimentary,
-# Mes_Ocup_GTH). El ajuste de ocupación (excluir House Use + Complimentary) que
-# antes sólo existía para el Día ahora también existe para el Mes. La capacidad
-# mensual se DERIVA del % crudo de Arion (ver calcular_ocup_mes_gth) en vez de
-# parsear un campo de "habitaciones totales del mes" que no es confiable extraer.
 CSV_HEADER = (
     "Fecha,Hotel,Color,Hab,Manager,"
     "Dia_Ocup,Dia_ADR,Dia_RevPAR,Dia_Lleg,Dia_Sal,"
@@ -100,10 +95,6 @@ def listar_todos_pdfs(service, folder_id):
     return todos
 
 def nombre_a_fecha(nombre):
-    """
-    Extrae fecha del nombre del PDF: formato YYYY.MM.DD → DD/MM/YYYY
-    Ej: 'K007_2026.05.15_HJLaRibera.pdf' → '15/05/2026'
-    """
     m = re.search(r'(\d{4})\.(\d{2})\.(\d{2})', nombre)
     if m:
         return f"{m.group(3)}/{m.group(2)}/{m.group(1)}"
@@ -135,8 +126,6 @@ def es_formato_bba(texto):
     return bool(re.search(r'[\d\.]+\nPorcentaje de Ocupaci', texto))
 
 def extraer_hab_house_normal(texto):
-    """PLR/Cariló/Soho: filas tipo 'House Use 1 10 107 0 8 44' (Dia Mes Año DiaAA MesAA AñoA).
-    Devuelve (hab_dia, hu_dia, comply_dia, hab_mes, hu_mes, comply_mes)."""
     hab_dia=hu_dia=comply_dia=0
     hab_mes=hu_mes=comply_mes=0
     m = re.search(r'Habitaciones Ocupadas\s+([\d,]+)\s+([\d,]+)', texto)
@@ -154,12 +143,6 @@ def extraer_hab_house_normal(texto):
     return hab_dia, hu_dia, comply_dia, hab_mes, hu_mes, comply_mes
 
 def extraer_hab_house_bba(texto):
-    """BBA (Crystal Reports): el valor del DÍA aparece ANTES del label, en su
-    propia línea ('0\\nComplimentary', '0\\nHouse Use'). Patrón ya validado en
-    producción (existía desde antes de este cambio).
-    Los valores de MES para BBA NO se leen acá — vienen de mes_sec por posición
-    fija dentro de extraer_fila_bba(), porque en el formato BBA la sección "Mes"
-    es una lista plana de números sin labels (ver nota ahí)."""
     hab_dia=hu_dia=comply_dia=0
     m = re.search(r'([\d,]+)\nHabitaciones Ocupadas', texto)
     if m: hab_dia = int(m.group(1).replace(',',''))
@@ -170,8 +153,6 @@ def extraer_hab_house_bba(texto):
     return hab_dia, hu_dia, comply_dia
 
 def calcular_ocup_gth(hab_ocup, house_use, comply, hab_total):
-    """Ocupación 'real' GTH del DÍA: excluye House Use y Complimentary.
-    Un resultado de 0% se muestra como 0%, no se reemplaza por el crudo de Arion."""
     if hab_total <= 0:
         return None
     neto = hab_ocup - house_use - comply
@@ -179,9 +160,6 @@ def calcular_ocup_gth(hab_ocup, house_use, comply, hab_total):
     return round(neto / hab_total * 100, 2)
 
 def calcular_ocup_mes_gth(hab_ocup_mes, house_use_mes, comply_mes, ocup_arion_mes_pct):
-    """Ocupación 'real' GTH del MES: excluye House Use y Complimentary.
-    La capacidad mensual se DERIVA del % crudo de Arion (no hay un campo
-    confiable de 'habitaciones totales del mes' en el K007 para parsear)."""
     if not ocup_arion_mes_pct or ocup_arion_mes_pct <= 0 or hab_ocup_mes <= 0:
         return None
     capacidad_mes = hab_ocup_mes / (ocup_arion_mes_pct / 100)
@@ -294,19 +272,6 @@ def extraer_fila_bba(texto, hotel, fecha_display):
     else:
         mes_ocup=mes_lleg=mes_adr=mes_rp=mes_rooms=mes_ayb=mes_rev=0
 
-    # ── Mes: Hab_Ocup/House_Use/Complimentary por posición fija ──────────────
-    # En el formato BBA, la sección "Mes" extraída por pdfminer (con los
-    # mismos LAParams que usa este script) es una lista PLANA de números sin
-    # labels — a diferencia del bloque "Dia" que sí tiene labels intercalados.
-    # Posiciones [5]/[22]/[23] fueron contadas y validadas a mano contra un
-    # PDF real de HJ Bahía Blanca (2026.06.19.pdf):
-    #   mes_sec[5]  = Habitaciones Ocupadas Mes (250 en ese PDF)
-    #   mes_sec[22] = Complimentary Mes (32 en ese PDF)
-    #   mes_sec[23] = House Use Mes (28 en ese PDF)
-    # Esto asume que BBA mantiene siempre las mismas 10 categorías de segmento
-    # en el mismo orden (Complimentary, House Use, Individual, Corporativa,
-    # Travel & Hotel Package, Prefered, Day Use, Aerolineas, Otas, Otras). Si
-    # Arion cambia esa lista, hay que volver a contar el offset.
     if mes_sec and len(mes_sec) > 23:
         hab_ocup_mes = ni(mes_sec, 5)
         comply_mes = ni(mes_sec, 22)
@@ -372,16 +337,22 @@ Mes_Ocup_GTH = max(0, Mes_Hab_Ocup - Mes_House_Use - Mes_Complimentary) / (Mes_H
 # ── CSV helpers ───────────────────────────────────────────────────────────────
 
 def normalizar_csv(csv_data):
-    """Si el CSV ya tiene la columna Mes_Ocup_GTH, está al día. Si no,
-    se agregan las columnas nuevas del header y se rellenan filas viejas con '0'."""
     lineas = csv_data.strip().split('\n')
-    if 'Mes_Ocup_GTH' in lineas[0]: return csv_data
+    if 'Mes_Ocup_GTH' in lineas[0]:
+        return csv_data
     n_nuevo = len(CSV_HEADER.split(','))
     nuevas = [CSV_HEADER]
     for linea in lineas[1:]:
         if not linea.strip(): continue
         campos = linea.split(',')
-        while len(campos) < n_nuevo: campos.append('0')
+        n = len(campos)
+        if n == 32:
+            campos = campos[:31] + ['0'] + [campos[31]] + ['0','0','0','0']
+        elif n == 33:
+            campos = campos + ['0','0','0','0']
+        elif n < n_nuevo:
+            while len(campos) < n_nuevo:
+                campos.append('0')
         nuevas.append(','.join(campos[:n_nuevo]))
     return '\n'.join(nuevas)
 
@@ -392,19 +363,16 @@ def nv(v):
     except: return 0
 
 def build_dashboard_data(csv_data):
-    """Genera DB, FECHAS, HOTELES para el dashboard operativo"""
     by_date = defaultdict(dict)
     for r in csv.DictReader(io.StringIO(csv_data.strip())):
         f, h = r['Fecha'], r['Hotel']
 
-        # Día: ocupación ajustada (excl. House Use + Complimentary)
         ocup_gth = nv(r.get('Dia_Ocup_GTH','0'))
         hab_ocup = int(nv(r.get('Dia_Hab_Ocup','0')))
         house_use = int(nv(r.get('Dia_House_Use','0')))
         comply = int(nv(r.get('Dia_Complimentary','0')))
         ocup_display = ocup_gth if hab_ocup > 0 else nv(r['Dia_Ocup'])
 
-        # Mes: ocupación ajustada (excl. House Use + Complimentary)
         mes_ocup_gth = nv(r.get('Mes_Ocup_GTH','0'))
         mes_hab_ocup = int(nv(r.get('Mes_Hab_Ocup','0')))
         mes_house_use = int(nv(r.get('Mes_House_Use','0')))
@@ -436,7 +404,6 @@ def build_dashboard_data(csv_data):
     )
 
 def build_ejecutivo_data(csv_data):
-    """Genera todas las constantes JS para el informe ejecutivo"""
     NOMBRES_MESES = {'01':'Ene','02':'Feb','03':'Mar','04':'Abr','05':'May',
                      '06':'Jun','07':'Jul','08':'Ago','09':'Sep','10':'Oct','11':'Nov','12':'Dic'}
     by_month = defaultdict(lambda: defaultdict(dict))
@@ -513,7 +480,6 @@ def replace_text(html, marker, value):
     return html.replace(f'[[{marker}]]', value)
 
 def build_html(csv_data, logo_b64):
-    """Genera el único HTML unificado (index.html)"""
     DB_JSON, FECHAS_JSON, HOTELES_JSON = build_dashboard_data(csv_data)
     ej = build_ejecutivo_data(csv_data)
 
@@ -544,7 +510,7 @@ def build_html(csv_data, logo_b64):
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    print("=== GTH Dashboard Generator v5 (Comply Día+Mes, BBA validado) ===", flush=True)
+    print("=== GTH Dashboard Generator v6 (fix migración CSV legacy) ===", flush=True)
     gh_token = os.environ.get("GH_TOKEN","")
     logo_b64 = os.environ.get("LOGO_B64","")
     sa_json  = os.environ.get("GDRIVE_SERVICE_ACCOUNT_JSON","")
