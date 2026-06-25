@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GTH Dashboard Generator — GitHub Actions — v6 (fix migración CSV legacy)"""
+"""GTH Dashboard Generator — GitHub Actions — v7 (fixes: CSV legacy, ADR fallback, RevPAR BBA)"""
 import os, sys, json, base64, datetime, urllib.request, urllib.error, csv, io, re
 from collections import defaultdict
 
@@ -95,6 +95,10 @@ def listar_todos_pdfs(service, folder_id):
     return todos
 
 def nombre_a_fecha(nombre):
+    """
+    Extrae fecha del nombre del PDF: formato YYYY.MM.DD → DD/MM/YYYY
+    Ej: 'K007_2026.05.15_HJLaRibera.pdf' → '15/05/2026'
+    """
     m = re.search(r'(\d{4})\.(\d{2})\.(\d{2})', nombre)
     if m:
         return f"{m.group(3)}/{m.group(2)}/{m.group(1)}"
@@ -126,6 +130,8 @@ def es_formato_bba(texto):
     return bool(re.search(r'[\d\.]+\nPorcentaje de Ocupaci', texto))
 
 def extraer_hab_house_normal(texto):
+    """PLR/Cariló/Soho: filas tipo 'House Use 1 10 107 0 8 44' (Dia Mes Año DiaAA MesAA AñoA).
+    Devuelve (hab_dia, hu_dia, comply_dia, hab_mes, hu_mes, comply_mes)."""
     hab_dia=hu_dia=comply_dia=0
     hab_mes=hu_mes=comply_mes=0
     m = re.search(r'Habitaciones Ocupadas\s+([\d,]+)\s+([\d,]+)', texto)
@@ -143,6 +149,9 @@ def extraer_hab_house_normal(texto):
     return hab_dia, hu_dia, comply_dia, hab_mes, hu_mes, comply_mes
 
 def extraer_hab_house_bba(texto):
+    """BBA (Crystal Reports): el valor del DÍA aparece ANTES del label, en su
+    propia línea ('0\\nComplimentary', '0\\nHouse Use'). Patrón validado contra
+    PDF real (2026.06.19.pdf, 2026.06.23.pdf)."""
     hab_dia=hu_dia=comply_dia=0
     m = re.search(r'([\d,]+)\nHabitaciones Ocupadas', texto)
     if m: hab_dia = int(m.group(1).replace(',',''))
@@ -153,6 +162,7 @@ def extraer_hab_house_bba(texto):
     return hab_dia, hu_dia, comply_dia
 
 def calcular_ocup_gth(hab_ocup, house_use, comply, hab_total):
+    """Ocupación 'real' GTH del DÍA: excluye House Use y Complimentary."""
     if hab_total <= 0:
         return None
     neto = hab_ocup - house_use - comply
@@ -160,6 +170,8 @@ def calcular_ocup_gth(hab_ocup, house_use, comply, hab_total):
     return round(neto / hab_total * 100, 2)
 
 def calcular_ocup_mes_gth(hab_ocup_mes, house_use_mes, comply_mes, ocup_arion_mes_pct):
+    """Ocupación 'real' GTH del MES: excluye House Use y Complimentary.
+    La capacidad mensual se DERIVA del % crudo de Arion."""
     if not ocup_arion_mes_pct or ocup_arion_mes_pct <= 0 or hab_ocup_mes <= 0:
         return None
     capacidad_mes = hab_ocup_mes / (ocup_arion_mes_pct / 100)
@@ -185,12 +197,22 @@ def nf(lst,idx):
     except: return 0.0
 
 def find_adr_idx(nums):
+    """Busca la posición del ADR (Tarifa Promedio) en la lista de números de
+    una columna, asumiendo que está en el rango $50.000–$600.000.
+
+    FIX: antes, si ningún valor caía en ese rango (típicamente porque el ADR
+    real del período es 0 — sin ventas ese día), la función devolvía un índice
+    fijo (32) como 'fallback'. Ese índice apuntaba a un campo cualquiera de la
+    lista (ej. 'Porcentaje de Disponibilidad'), causando que se mostrara un
+    número sin sentido como ADR (ej. $97 en vez de $0).
+    Ahora devuelve None explícitamente: 'no hay ADR válido', y quien llama
+    decide mostrar 0 en vez de inventar un valor."""
     for i in range(20, len(nums)):
         try:
             v = float(str(nums[i]).replace(',',''))
             if 50000 <= v <= 600000: return i
         except: pass
-    return 32
+    return None
 
 def extraer_manager_normal(texto):
     pat = re.compile(r'^[A-ZÁÉÍÓÚÑ][a-záéíóúñ]{2,15}(?:\s[A-ZÁÉÍÓÚÑ][a-záéíóúñ]{2,15}){1,2}$')
@@ -218,6 +240,10 @@ def extraer_fila_normal(texto, hotel, fecha_display):
     def get_kpis(sec):
         if not sec: return {'adr':0,'rp':0,'rooms':0,'ayb':0,'rev':0}
         s = find_adr_idx(sec)
+        if s is None:
+            # No hay ADR válido en este período (probablemente 0 ventas) —
+            # mostrar 0 en vez de leer un campo equivocado por índice fijo.
+            return {'adr':0,'rp':0,'rooms':0,'ayb':0,'rev':ni(sec,-2) if len(sec)>=2 else 0}
         return {'adr':ni(sec,s),'rp':ni(sec,s+1),'rooms':ni(sec,s+rooms_off),'ayb':ni(sec,s+ayb_off),'rev':ni(sec,-2) if len(sec)>=2 else 0}
     d=get_kpis(dia); m=get_kpis(mes); aa=get_kpis(dia_aa); maa=get_kpis(mes_aa)
     dia_ocup=nf(dia,7); dia_lleg=ni(dia,9); dia_sal=ni(dia,10)
@@ -261,17 +287,27 @@ def extraer_fila_bba(texto, hotel, fecha_display):
     dia_ayb=int(float(dia_ayb_m.group(1).replace(',',''))) if dia_ayb_m else 0
     dia_rev_m=re.search(r'([\d,]+)\nHotel Revenue\n',texto)
     dia_rev=int(float(dia_rev_m.group(1).replace(',',''))) if dia_rev_m else 0
-    rp_m=re.search(r'REVPAR\n([\d,]+)',texto)
+    # FIX: el patrón estaba invertido ('REVPAR\n(numero)' = label antes del
+    # número), inconsistente con el resto de los campos de BBA, que usan
+    # 'numero\nLabel'. Por eso REVPAR Día de BBA siempre daba 0. Validado
+    # contra PDF real 2026.06.23.pdf (REVPAR real = 27,257).
+    rp_m=re.search(r'([\d,]+)\nREVPAR',texto)
     dia_rp=int(float(rp_m.group(1).replace(',',''))) if rp_m else 0
     if mes_sec and len(mes_sec)>35:
         s=find_adr_idx(mes_sec)
         mes_ocup=nf(mes_sec,7); mes_lleg=ni(mes_sec,9)
-        mes_adr=ni(mes_sec,s); mes_rp=ni(mes_sec,s+1)
-        mes_rooms=ni(mes_sec,s+4); mes_ayb=ni(mes_sec,s+5)
+        if s is None:
+            mes_adr=mes_rp=mes_rooms=mes_ayb=0
+        else:
+            mes_adr=ni(mes_sec,s); mes_rp=ni(mes_sec,s+1)
+            mes_rooms=ni(mes_sec,s+4); mes_ayb=ni(mes_sec,s+5)
         mes_rev=ni(mes_sec,-2) if len(mes_sec)>=2 else 0
     else:
         mes_ocup=mes_lleg=mes_adr=mes_rp=mes_rooms=mes_ayb=mes_rev=0
 
+    # Mes: Hab_Ocup/House_Use/Complimentary por posición fija dentro de mes_sec
+    # (validado contra 2026.06.19.pdf real: mes_sec[5]=Hab_Ocup, [22]=Comply,
+    # [23]=House_Use).
     if mes_sec and len(mes_sec) > 23:
         hab_ocup_mes = ni(mes_sec, 5)
         comply_mes = ni(mes_sec, 22)
@@ -288,6 +324,7 @@ def extraer_fila_bba(texto, hotel, fecha_display):
     mes_ocup_gth = calcular_ocup_mes_gth(hab_ocup_mes, house_use_mes, comply_mes, mes_ocup)
     if mes_ocup_gth is None: mes_ocup_gth = 0.0
     print(f"    GTH Ocup BBA Mes: ({hab_ocup_mes}-{house_use_mes}-{comply_mes})/cap.implícita = {mes_ocup_gth}% (Arion crudo: {mes_ocup}%)", flush=True)
+    print(f"    BBA Dia_ADR={dia_adr} Dia_RevPAR={dia_rp}", flush=True)
 
     return (f"{fecha_display},{hotel},{info['color']},{info['hab']},{manager},"
             f"{dia_ocup},{dia_adr},{dia_rp},{dia_lleg},{dia_sal},"
@@ -320,6 +357,7 @@ Reglas: Revenue SIN IVA.
 Dia_Complimentary / Mes_Complimentary = valores de la fila "Complimentary", columnas Dia y Mes.
 Dia_Ocup_GTH = max(0, Dia_Hab_Ocup - Dia_House_Use - Dia_Complimentary) / Hab * 100.
 Mes_Ocup_GTH = max(0, Mes_Hab_Ocup - Mes_House_Use - Mes_Complimentary) / (Mes_Hab_Ocup / (Mes_Ocup%/100)) * 100.
+Si Tarifa Promedio (ADR) de un período es 0 o no aparece, Dia_ADR/Mes_ADR = 0 (no inventar otro número).
 0 si algún dato no aparece."""
     body = {"model":"claude-haiku-4-5","max_tokens":700,"messages":[{"role":"user","content":prompt}]}
     req = urllib.request.Request(url, data=json.dumps(body).encode(), headers=headers, method="POST")
@@ -337,10 +375,16 @@ Mes_Ocup_GTH = max(0, Mes_Hab_Ocup - Mes_House_Use - Mes_Complimentary) / (Mes_H
 # ── CSV helpers ───────────────────────────────────────────────────────────────
 
 def normalizar_csv(csv_data):
+    """Migra filas viejas al formato actual de 37 columnas.
+
+    Dia_Complimentary va INSERTADO entre Dia_House_Use y Dia_Ocup_GTH — si se
+    agregara al final en vez de insertarse ahí, el valor real de Dia_Ocup_GTH
+    se leería con el nombre 'Dia_Complimentary' y la columna Dia_Ocup_GTH
+    quedaría en cero (bug ya corregido en v6)."""
     lineas = csv_data.strip().split('\n')
     if 'Mes_Ocup_GTH' in lineas[0]:
         return csv_data
-    n_nuevo = len(CSV_HEADER.split(','))
+    n_nuevo = len(CSV_HEADER.split(','))  # 37
     nuevas = [CSV_HEADER]
     for linea in lineas[1:]:
         if not linea.strip(): continue
@@ -363,6 +407,7 @@ def nv(v):
     except: return 0
 
 def build_dashboard_data(csv_data):
+    """Genera DB, FECHAS, HOTELES para el dashboard operativo"""
     by_date = defaultdict(dict)
     for r in csv.DictReader(io.StringIO(csv_data.strip())):
         f, h = r['Fecha'], r['Hotel']
@@ -404,6 +449,7 @@ def build_dashboard_data(csv_data):
     )
 
 def build_ejecutivo_data(csv_data):
+    """Genera todas las constantes JS para el informe ejecutivo"""
     NOMBRES_MESES = {'01':'Ene','02':'Feb','03':'Mar','04':'Abr','05':'May',
                      '06':'Jun','07':'Jul','08':'Ago','09':'Sep','10':'Oct','11':'Nov','12':'Dic'}
     by_month = defaultdict(lambda: defaultdict(dict))
@@ -480,6 +526,7 @@ def replace_text(html, marker, value):
     return html.replace(f'[[{marker}]]', value)
 
 def build_html(csv_data, logo_b64):
+    """Genera el único HTML unificado (index.html)"""
     DB_JSON, FECHAS_JSON, HOTELES_JSON = build_dashboard_data(csv_data)
     ej = build_ejecutivo_data(csv_data)
 
@@ -510,7 +557,7 @@ def build_html(csv_data, logo_b64):
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    print("=== GTH Dashboard Generator v6 (fix migración CSV legacy) ===", flush=True)
+    print("=== GTH Dashboard Generator v7 (fixes: CSV legacy, ADR fallback, RevPAR BBA) ===", flush=True)
     gh_token = os.environ.get("GH_TOKEN","")
     logo_b64 = os.environ.get("LOGO_B64","")
     sa_json  = os.environ.get("GDRIVE_SERVICE_ACCOUNT_JSON","")
@@ -572,7 +619,7 @@ if __name__ == "__main__":
 
                 fila = extraer_fila_k007(texto, hotel, fecha_str)
                 campos = fila.split(',')
-                print(f"    Parser: Ocup={campos[5]}% ADR={campos[6]} Rev={campos[10]} | "
+                print(f"    Parser: Ocup={campos[5]}% ADR={campos[6]} RevPAR={campos[7]} Rev={campos[10]} | "
                       f"DiaComply={campos[31]} OcupGTH_Dia={campos[32]}% | "
                       f"MesComply={campos[35]} OcupGTH_Mes={campos[36]}%", flush=True)
 
