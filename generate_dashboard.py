@@ -520,7 +520,7 @@ def build_ejecutivo_data(csv_data):
 
         mes_ocup = nv(r.get('Mes_Ocup_GTH', 0))
         if mes_ocup <= 0:
-            mes_ocup = nv(r.get('Mes_Ocup', 0))
+           mes_ocup = nv(r.get('Mes_Ocup', 0))
 
         mes_rooms = rooms_revenue_base(
         nv(r.get('Mes_Rooms', 0)),
@@ -536,7 +536,7 @@ def build_ejecutivo_data(csv_data):
         mes_ocup
         )
 
-    return mes_ocup, mes_adr, mes_revpar, nv(r.get('Mes_Rev', 0)), mes_rooms, nv(r.get('Mes_AyB', 0))
+        return mes_ocup, mes_adr, mes_revpar, nv(r.get('Mes_Rev', 0)), mes_rooms, nv(r.get('Mes_AyB', 0))
     for mk in meses_ord:
         for h in HOTELES_LIST:
             r = by_month[mk].get(h)
