@@ -129,23 +129,24 @@ def exportar_pdf_texto(service, file_id):
 def es_formato_bba(texto):
     return bool(re.search(r'[\d\.]+\nPorcentaje de Ocupaci', texto))
 
-def extraer_hab_house_normal(texto):
-    """PLR/Cariló/Soho: filas tipo 'House Use 1 10 107 0 8 44' (Dia Mes Año DiaAA MesAA AñoA).
-    Devuelve (hab_dia, hu_dia, comply_dia, hab_mes, hu_mes, comply_mes)."""
-    hab_dia=hu_dia=comply_dia=0
-    hab_mes=hu_mes=comply_mes=0
-    m = re.search(r'Habitaciones Ocupadas\s+([\d,]+)\s+([\d,]+)', texto)
-    if m:
-        hab_dia = int(m.group(1).replace(',',''))
-        hab_mes = int(m.group(2).replace(',',''))
-    m = re.search(r'House Use\s+([\d,]+)\s+([\d,]+)', texto)
-    if m:
-        hu_dia = int(m.group(1).replace(',',''))
-        hu_mes = int(m.group(2).replace(',',''))
-    m = re.search(r'Complimentary\s+([\d,]+)\s+([\d,]+)', texto)
-    if m:
-        comply_dia = int(m.group(1).replace(',',''))
-        comply_mes = int(m.group(2).replace(',',''))
+def extraer_hab_house_normal(dia, mes):
+    """PLR/Cariló/Soho: lee directo de las listas ya extraídas por get_sec()
+    (las mismas que ya dan bien %Ocup/Llegadas/Salidas). Posiciones fijas
+    validadas contra PDF real (Cariló 2026.06.24.pdf, texto completo
+    pegado por el usuario, cruzado contra valores ya correctos en
+    pantalla):
+        índice 5  = Habitaciones Ocupadas
+        índice 22 = Complimentary
+        índice 23 = House Use
+    Antes se usaba un regex separado buscando 'Habitaciones Ocupadas\\s+
+    (num)\\s+(num)' directo sobre el texto crudo, que nunca matcheaba con
+    el orden real que produce pdfminer — por eso este campo daba siempre 0."""
+    hab_dia  = ni(dia, 5) if dia else 0
+    hu_dia   = ni(dia, 23) if dia else 0
+    comply_dia = ni(dia, 22) if dia else 0
+    hab_mes  = ni(mes, 5) if mes else 0
+    hu_mes   = ni(mes, 23) if mes else 0
+    comply_mes = ni(mes, 22) if mes else 0
     return hab_dia, hu_dia, comply_dia, hab_mes, hu_mes, comply_mes
 
 def extraer_hab_house_bba(texto):
@@ -196,17 +197,25 @@ def nf(lst,idx):
     try: return float(str(lst[idx]).replace(',',''))
     except: return 0.0
 
-def find_adr_idx(nums):
-    """Busca la posición del ADR (Tarifa Promedio) en la lista de números de
-    una columna, asumiendo que está en el rango $50.000–$600.000.
+ADR_IDX_NORMAL = 32  # índice 0-based de "Tarifa Promedio" en la lista columna-
+# major de un K007 normal (PLR/Cariló/Soho). CONFIRMADO con el texto real
+# completo de Cariló 2026.06.24.pdf, cruzando contra valores que ya estaban
+# correctos en el dashboard (dia[7]=%Ocup=2.56, dia[9]=Llegadas=1,
+# dia[10]=Salidas=0 — los 3 coinciden exactamente). A partir de ahí, contando
+# los 45 labels del reporte hasta "Tarifa Promedio", el índice es 32.
+ADR_IDX_TOT_HAB = 33  # +1 si el reporte tiene la columna extra "TOTAL REVENUE
+# / HAB" (sin validar todavía — asumido por simetría con rooms_off/ayb_off,
+# que ya tenían ese mismo ajuste condicional en el código original).
 
-    FIX: antes, si ningún valor caía en ese rango (típicamente porque el ADR
-    real del período es 0 — sin ventas ese día), la función devolvía un índice
-    fijo (32) como 'fallback'. Ese índice apuntaba a un campo cualquiera de la
-    lista (ej. 'Porcentaje de Disponibilidad'), causando que se mostrara un
-    número sin sentido como ADR (ej. $97 en vez de $0).
-    Ahora devuelve None explícitamente: 'no hay ADR válido', y quien llama
-    decide mostrar 0 en vez de inventar un valor."""
+def find_adr_idx(nums):
+    """[OBSOLETO desde v8 — ya no se usa, se deja sólo por compatibilidad].
+    Buscaba el ADR por rango numérico (50.000-600.000). Se abandonó porque
+    cuando el ADR real cae fuera de ese rango (ej. $45.455, bajo el piso de
+    50.000), el heurístico se salta el campo correcto y agarra el SIGUIENTE
+    valor que sí cae en rango (ej. REVPAC), desplazando todos los offsets
+    relativos (RevPAR, Rooms, AA&BB) hacia campos equivocados. Confirmado con
+    el PDF real de Cariló 2026.06.24 (Tarifa Promedio real=45.455 vs ADR
+    mostrado=90.661=REVPAC, exactamente 2 posiciones después)."""
     for i in range(20, len(nums)):
         try:
             v = float(str(nums[i]).replace(',',''))
@@ -237,20 +246,17 @@ def extraer_fila_normal(texto, hotel, fecha_display):
     tiene_tot_hab = 'TOTAL REVENUE / HAB' in texto.upper()
     rooms_off = 4 if tiene_tot_hab else 3
     ayb_off   = 5 if tiene_tot_hab else 4
+    s_fijo = ADR_IDX_TOT_HAB if tiene_tot_hab else ADR_IDX_NORMAL
     def get_kpis(sec):
-        if not sec: return {'adr':0,'rp':0,'rooms':0,'ayb':0,'rev':0}
-        s = find_adr_idx(sec)
-        if s is None:
-            # No hay ADR válido en este período (probablemente 0 ventas) —
-            # mostrar 0 en vez de leer un campo equivocado por índice fijo.
+        if not sec or len(sec) <= s_fijo:
             return {'adr':0,'rp':0,'rooms':0,'ayb':0,'rev':ni(sec,-2) if len(sec)>=2 else 0}
-        return {'adr':ni(sec,s),'rp':ni(sec,s+1),'rooms':ni(sec,s+rooms_off),'ayb':ni(sec,s+ayb_off),'rev':ni(sec,-2) if len(sec)>=2 else 0}
+        return {'adr':ni(sec,s_fijo),'rp':ni(sec,s_fijo+1),'rooms':ni(sec,s_fijo+rooms_off),'ayb':ni(sec,s_fijo+ayb_off),'rev':ni(sec,-2) if len(sec)>=2 else 0}
     d=get_kpis(dia); m=get_kpis(mes); aa=get_kpis(dia_aa); maa=get_kpis(mes_aa)
     dia_ocup=nf(dia,7); dia_lleg=ni(dia,9); dia_sal=ni(dia,10)
     mes_ocup=nf(mes,7); mes_lleg=ni(mes,9)
     aa_ocup=nf(dia_aa,7) if dia_aa else 0.0
 
-    hab_ocup, house_use, comply, hab_ocup_mes, house_use_mes, comply_mes = extraer_hab_house_normal(texto)
+    hab_ocup, house_use, comply, hab_ocup_mes, house_use_mes, comply_mes = extraer_hab_house_normal(dia, mes)
 
     ocup_gth = calcular_ocup_gth(hab_ocup, house_use, comply, info['hab'])
     if ocup_gth is None: ocup_gth = 0.0
@@ -287,20 +293,19 @@ def extraer_fila_bba(texto, hotel, fecha_display):
     dia_ayb=int(float(dia_ayb_m.group(1).replace(',',''))) if dia_ayb_m else 0
     dia_rev_m=re.search(r'([\d,]+)\nHotel Revenue\n',texto)
     dia_rev=int(float(dia_rev_m.group(1).replace(',',''))) if dia_rev_m else 0
-    # FIX: el patrón estaba invertido ('REVPAR\n(numero)' = label antes del
-    # número), inconsistente con el resto de los campos de BBA, que usan
-    # 'numero\nLabel'. Por eso REVPAR Día de BBA siempre daba 0. Validado
-    # contra PDF real 2026.06.23.pdf (REVPAR real = 27,257).
-    rp_m=re.search(r'([\d,]+)\nREVPAR',texto)
+    # NOTA: patrón validado contra pdfminer real (2026.06.19.pdf) — el orden
+    # correcto acá ES 'REVPAR\n(numero)' (label antes del número). Un intento
+    # previo de "corregir" esto a la inversa fue un error, basado en evidencia
+    # del motor de extracción de Drive (distinto a pdfminer), no del texto real.
+    rp_m=re.search(r'REVPAR\n([\d,]+)',texto)
     dia_rp=int(float(rp_m.group(1).replace(',',''))) if rp_m else 0
     if mes_sec and len(mes_sec)>35:
-        s=find_adr_idx(mes_sec)
         mes_ocup=nf(mes_sec,7); mes_lleg=ni(mes_sec,9)
-        if s is None:
-            mes_adr=mes_rp=mes_rooms=mes_ayb=0
-        else:
-            mes_adr=ni(mes_sec,s); mes_rp=ni(mes_sec,s+1)
-            mes_rooms=ni(mes_sec,s+4); mes_ayb=ni(mes_sec,s+5)
+        # Índice fijo ADR_IDX_NORMAL (32) = "Tarifa Promedio", consistente con
+        # los índices ya validados contra PDF real de BBA (5, 22, 23 más
+        # abajo) que pertenecen a la MISMA lista de 45 labels.
+        mes_adr=ni(mes_sec,32); mes_rp=ni(mes_sec,33)
+        mes_rooms=ni(mes_sec,36); mes_ayb=ni(mes_sec,37)
         mes_rev=ni(mes_sec,-2) if len(mes_sec)>=2 else 0
     else:
         mes_ocup=mes_lleg=mes_adr=mes_rp=mes_rooms=mes_ayb=mes_rev=0
