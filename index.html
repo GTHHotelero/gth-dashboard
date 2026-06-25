@@ -371,7 +371,11 @@ function hotelCard(d,tab,fecha){
   const rev=d[pfx+'rev'],rooms=d[pfx+'rooms'],ayb=d[pfx+'ayb'];
   const raa=d[pfx+'rev_aa']||0,rooa=d[pfx+'rooms_aa']||0,ayba=d[pfx+'ayb_aa']||0;
   const lleg=d[pfx+'lleg'],sal=d[pfx+'sal']||0;
-  const huNeto=Math.max(0,(d.dia_hab_ocup||0)-(d.dia_house_use||0)-(d.dia_comply||0));
+  const habOcup = d[pfx+'hab_ocup'] || 0;
+const houseUse = d[pfx+'house_use'] || 0;
+const comply = d[pfx+'comply'] || 0;
+
+  const huNeto = Math.max(0, habOcup - houseUse - comply);
   const excl = (tab==='dia')
     ? ((d.d_house_use||d.d_comply) ? `<div style="font-size:9px;color:var(--muted);text-align:center;padding:5px 12px;background:#FAFAFA;border-bottom:1px solid var(--border)">Excl. de ocupación: ${d.d_house_use||0} House Use · ${d.d_comply||0} Comply</div>` : '')
     : ((d.m_house_use||d.m_comply) ? `<div style="font-size:9px;color:var(--muted);text-align:center;padding:5px 12px;background:#FAFAFA;border-bottom:1px solid var(--border)">Excl. de ocupación (mes): ${d.m_house_use||0} House Use · ${d.m_comply||0} Comply</div>` : '');
@@ -384,7 +388,10 @@ function hotelCard(d,tab,fecha){
     <div class="arr-strip">
       <div class="arr-cell"><div class="arr-lbl">Llegadas</div><div class="arr-val" style="color:${color}">${lleg}</div></div>
       <div class="arr-cell"><div class="arr-lbl">Salidas</div><div class="arr-val">${sal}</div></div>
-      ${tab==='dia'?`<div class="arr-cell"><div class="arr-lbl">Hab. Ocup.</div><div class="arr-val">${huNeto}</div></div>`:''}
+      <div class="arr-cell">
+    <div class="arr-lbl">Hab. Ocup.</div>
+    <div class="arr-val">${huNeto}</div>
+</div>
       <div class="arr-cell"><div class="arr-lbl">Ocup%</div><div class="arr-val" style="color:${ocColor(oc)}">${fp(oc)}</div></div>
     </div>
     <div class="kpi-grid">
