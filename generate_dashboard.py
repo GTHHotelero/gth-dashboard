@@ -182,6 +182,27 @@ def calcular_ocup_mes_gth(hab_ocup_mes, house_use_mes, comply_mes, ocup_arion_me
     if neto < 0: neto = 0
     return round(neto / capacidad_mes * 100, 2)
 
+def rooms_revenue_base(rooms_rev, hotel_rev=0, ayb_rev=0):
+    """Revenue de habitaciones base para ADR/RevPAR.
+    Prioridad: valor Rooms del PDF. Si viene 0 (caso BBA día), usa Hotel Revenue - A&B.
+    """
+    rooms = int(round(rooms_rev or 0))
+    if rooms <= 0 and hotel_rev and ayb_rev:
+        rooms = max(0, int(round(hotel_rev - ayb_rev)))
+    return rooms
+
+def calcular_adr_revpar(rooms_rev, hab_ocup, house_use, comply, ocup_pct):
+    """Calcula KPIs consistentes para todos los hoteles/períodos:
+    ADR = Venta Habitaciones / Habitaciones Ocupadas netas
+    RevPAR = Ocupación GTH x ADR
+    Habitaciones Ocupadas netas = Hab_Ocup - House Use - Complimentary
+    """
+    hab_netas = max(0, int(hab_ocup or 0) - int(house_use or 0) - int(comply or 0))
+    rooms = int(round(rooms_rev or 0))
+    adr = int(round(rooms / hab_netas)) if hab_netas > 0 and rooms > 0 else 0
+    revpar = int(round(adr * float(ocup_pct or 0) / 100)) if adr > 0 and ocup_pct else 0
+    return adr, revpar, hab_netas
+
 def get_sec(texto, label, terminators):
     le = re.escape(label)
     pat = rf'\b{le}\b\s*\n([\s\S]+?)(?=\n\s*(?:{terminators}|\Z))'
@@ -266,12 +287,20 @@ def extraer_fila_normal(texto, hotel, fecha_display):
     if mes_ocup_gth is None: mes_ocup_gth = 0.0
     print(f"    GTH Ocup Mes: ({hab_ocup_mes}-{house_use_mes}-{comply_mes})/cap.implícita = {mes_ocup_gth}% (Arion crudo: {mes_ocup}%)", flush=True)
 
+    # KPIs calculados uniformemente para todos los hoteles:
+    # ADR = Venta Habitaciones / Habitaciones Ocupadas netas
+    # RevPAR = Ocupación GTH x ADR
+    dia_rooms_calc = rooms_revenue_base(d['rooms'], d['rev'], d['ayb'])
+    mes_rooms_calc = rooms_revenue_base(m['rooms'], m['rev'], m['ayb'])
+    dia_adr_calc, dia_rp_calc, _ = calcular_adr_revpar(dia_rooms_calc, hab_ocup, house_use, comply, ocup_gth)
+    mes_adr_calc, mes_rp_calc, _ = calcular_adr_revpar(mes_rooms_calc, hab_ocup_mes, house_use_mes, comply_mes, mes_ocup_gth)
+
     return (f"{fecha_display},{hotel},{info['color']},{info['hab']},{manager},"
-            f"{dia_ocup},{d['adr']},{d['rp']},{dia_lleg},{dia_sal},"
-            f"{d['rev']},{d['rooms']},{d['ayb']},"
+            f"{dia_ocup},{dia_adr_calc},{dia_rp_calc},{dia_lleg},{dia_sal},"
+            f"{d['rev']},{dia_rooms_calc},{d['ayb']},"
             f"{aa['rev']},{aa['rooms']},{aa['ayb']},"
-            f"{mes_ocup},{m['adr']},{m['rp']},{mes_lleg},"
-            f"{m['rev']},{m['rooms']},{m['ayb']},"
+            f"{mes_ocup},{mes_adr_calc},{mes_rp_calc},{mes_lleg},"
+            f"{m['rev']},{mes_rooms_calc},{m['ayb']},"
             f"{maa['rev']},{maa['rooms']},{maa['ayb']},"
             f"{aa_ocup},{aa['adr']},{aa['rp']},"
             f"{hab_ocup},{house_use},{comply},{ocup_gth},"
@@ -329,14 +358,20 @@ def extraer_fila_bba(texto, hotel, fecha_display):
     mes_ocup_gth = calcular_ocup_mes_gth(hab_ocup_mes, house_use_mes, comply_mes, mes_ocup)
     if mes_ocup_gth is None: mes_ocup_gth = 0.0
     print(f"    GTH Ocup BBA Mes: ({hab_ocup_mes}-{house_use_mes}-{comply_mes})/cap.implícita = {mes_ocup_gth}% (Arion crudo: {mes_ocup}%)", flush=True)
-    print(f"    BBA Dia_ADR={dia_adr} Dia_RevPAR={dia_rp}", flush=True)
+    # KPIs calculados uniformemente para todos los hoteles:
+    # BBA día no siempre expone Rooms Revenue limpio; si viene 0, se deriva como Hotel Revenue - A&B.
+    dia_rooms_calc = rooms_revenue_base(0, dia_rev, dia_ayb)
+    mes_rooms_calc = rooms_revenue_base(mes_rooms, mes_rev, mes_ayb)
+    dia_adr_calc, dia_rp_calc, _ = calcular_adr_revpar(dia_rooms_calc, hab_ocup, house_use, comply, ocup_gth)
+    mes_adr_calc, mes_rp_calc, _ = calcular_adr_revpar(mes_rooms_calc, hab_ocup_mes, house_use_mes, comply_mes, mes_ocup_gth)
+    print(f"    BBA Calc Dia_ADR={dia_adr_calc} Dia_RevPAR={dia_rp_calc} Rooms={dia_rooms_calc}", flush=True)
 
     return (f"{fecha_display},{hotel},{info['color']},{info['hab']},{manager},"
-            f"{dia_ocup},{dia_adr},{dia_rp},{dia_lleg},{dia_sal},"
-            f"{dia_rev},0,{dia_ayb},"
+            f"{dia_ocup},{dia_adr_calc},{dia_rp_calc},{dia_lleg},{dia_sal},"
+            f"{dia_rev},{dia_rooms_calc},{dia_ayb},"
             f"0,0,0,"
-            f"{mes_ocup},{mes_adr},{mes_rp},{mes_lleg},"
-            f"{mes_rev},{mes_rooms},{mes_ayb},"
+            f"{mes_ocup},{mes_adr_calc},{mes_rp_calc},{mes_lleg},"
+            f"{mes_rev},{mes_rooms_calc},{mes_ayb},"
             f"0,0,0,"
             f"0.0,0,0,"
             f"{hab_ocup},{house_use},{comply},{ocup_gth},"
@@ -362,7 +397,8 @@ Reglas: Revenue SIN IVA.
 Dia_Complimentary / Mes_Complimentary = valores de la fila "Complimentary", columnas Dia y Mes.
 Dia_Ocup_GTH = max(0, Dia_Hab_Ocup - Dia_House_Use - Dia_Complimentary) / Hab * 100.
 Mes_Ocup_GTH = max(0, Mes_Hab_Ocup - Mes_House_Use - Mes_Complimentary) / (Mes_Hab_Ocup / (Mes_Ocup%/100)) * 100.
-Si Tarifa Promedio (ADR) de un período es 0 o no aparece, Dia_ADR/Mes_ADR = 0 (no inventar otro número).
+ADR debe validarse con: Venta de Habitaciones / Habitaciones Ocupadas netas.
+RevPAR debe validarse con: Ocupación GTH x ADR.
 0 si algún dato no aparece."""
     body = {"model":"claude-haiku-4-5","max_tokens":700,"messages":[{"role":"user","content":prompt}]}
     req = urllib.request.Request(url, data=json.dumps(body).encode(), headers=headers, method="POST")
