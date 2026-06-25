@@ -495,9 +495,19 @@ def build_ejecutivo_data(csv_data):
                      '06':'Jun','07':'Jul','08':'Ago','09':'Sep','10':'Oct','11':'Nov','12':'Dic'}
     by_month = defaultdict(lambda: defaultdict(dict))
     for r in csv.DictReader(io.StringIO(csv_data.strip())):
-        partes = r['Fecha'].split('/')
-        mk = f"{partes[1]}/{partes[2]}"
+    partes = r['Fecha'].split('/')
+    mk = f"{partes[1]}/{partes[2]}"
+
+    actual = by_month[mk].get(r['Hotel'])
+
+    if actual is None:
         by_month[mk][r['Hotel']] = r
+    else:
+        f_actual = tuple(map(int, actual['Fecha'].split('/')[::-1]))
+        f_nueva = tuple(map(int, r['Fecha'].split('/')[::-1]))
+
+        if f_nueva > f_actual:
+            by_month[mk][r['Hotel']] = r
 
     meses_ord = sorted(by_month.keys(), key=lambda m:(int(m.split('/')[1]),int(m.split('/')[0])))
     meses_labels = [f"{NOMBRES_MESES[mk.split('/')[0]]} {mk.split('/')[1]}" for mk in meses_ord]
