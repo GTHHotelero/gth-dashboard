@@ -567,13 +567,26 @@ def build_ejecutivo_data(csv_data):
                             "Mes_Rooms":nv(r['Mes_Rooms']),"Mes_AyB":nv(r['Mes_AyB'])}
 
     scatter = []
-    for h in HOTELES_LIST:
-        puntos = []
-        for i,mk in enumerate(meses_ord):
-            r = by_month[mk].get(h)
-            if r and nv(r['Mes_Ocup'])>0:
-                puntos.append({"x":round(nv(r['Mes_Ocup']),2),"y":round(nv(r['Mes_ADR'])/1000,1),"mes":meses_labels[i]})
-        scatter.append({"nombre":h,"color":HOTEL_INFO[h]["color"],"puntos":puntos})
+for h in HOTELES_LIST:
+    puntos = []
+    for i, mk in enumerate(meses_ord):
+        r = by_month[mk].get(h)
+
+        if r:
+            mes_ocup, mes_adr, mes_revpar, mes_rev, mes_rooms, mes_ayb = kpis_mes_ej(r)
+
+            if mes_ocup > 0 and mes_adr > 0:
+                puntos.append({
+                    "x": round(mes_ocup, 2),
+                    "y": round(mes_adr / 1000, 1),
+                    "mes": meses_labels[i]
+                })
+
+    scatter.append({
+        "nombre": h,
+        "color": HOTEL_INFO[h]["color"],
+        "puntos": puntos
+    })
 
     badge = meses_labels[-1] if meses_labels else "—"
     hoteles_con_datos = sum(1 for h in HOTELES_LIST if by_month[ultimo].get(h)) if ultimo else 0
