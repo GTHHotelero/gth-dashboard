@@ -540,10 +540,19 @@ def build_ejecutivo_data(csv_data):
     for mk in meses_ord:
         for h in HOTELES_LIST:
             r = by_month[mk].get(h)
-            series['ocup'][h].append(round(nv(r['Mes_Ocup']),2) if r else None)
-            series['adr'][h].append(round(nv(r['Mes_ADR'])/1000,1) if r else None)
-            series['rp'][h].append(round(nv(r['Mes_RevPAR'])/1000,1) if r else None)
-            series['rev'][h].append(round(nv(r['Mes_Rev'])/1e6,1) if r else None)
+
+            if r:
+                mes_ocup, mes_adr, mes_revpar, mes_rev, mes_rooms, mes_ayb = kpis_mes_ej(r)
+
+                series['ocup'][h].append(round(mes_ocup, 2))
+                series['adr'][h].append(round(mes_adr / 1000, 1))
+                series['rp'][h].append(round(mes_revpar / 1000, 1))
+                series['rev'][h].append(round(mes_rev / 1e6, 1))
+            else:
+                series['ocup'][h].append(None)
+                series['adr'][h].append(None)
+                series['rp'][h].append(None)
+                series['rev'][h].append(None)
 
     ultimo = meses_ord[-1] if meses_ord else None
     bench = {}
