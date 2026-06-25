@@ -513,6 +513,30 @@ def build_ejecutivo_data(csv_data):
     meses_labels = [f"{NOMBRES_MESES[mk.split('/')[0]]} {mk.split('/')[1]}" for mk in meses_ord]
 
     series = {k:{h:[] for h in HOTELES_LIST} for k in ['ocup','adr','rp','rev']}
+    def kpis_mes_ej(r):
+        mes_hab_ocup = int(nv(r.get('Mes_Hab_Ocup', 0)))
+        mes_house_use = int(nv(r.get('Mes_House_Use', 0)))
+        mes_comply = int(nv(r.get('Mes_Complimentary', 0)))
+
+        mes_ocup = nv(r.get('Mes_Ocup_GTH', 0))
+        if mes_ocup <= 0:
+            mes_ocup = nv(r.get('Mes_Ocup', 0))
+
+        mes_rooms = rooms_revenue_base(
+        nv(r.get('Mes_Rooms', 0)),
+        nv(r.get('Mes_Rev', 0)),
+        nv(r.get('Mes_AyB', 0))
+        )
+
+        mes_adr, mes_revpar, _ = calcular_adr_revpar(
+        mes_rooms,
+        mes_hab_ocup,
+        mes_house_use,
+        mes_comply,
+        mes_ocup
+        )
+
+    return mes_ocup, mes_adr, mes_revpar, nv(r.get('Mes_Rev', 0)), mes_rooms, nv(r.get('Mes_AyB', 0))
     for mk in meses_ord:
         for h in HOTELES_LIST:
             r = by_month[mk].get(h)
