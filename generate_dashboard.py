@@ -519,14 +519,12 @@ def build_ejecutivo_data(csv_data):
         mes_comply = int(nv(r.get('Mes_Complimentary', 0)))
 
         mes_ocup = nv(r.get('Mes_Ocup_GTH', 0))
-        if mes_ocup <= 0:
-           mes_ocup = nv(r.get('Mes_Ocup', 0))
-
+        
         mes_rooms = rooms_revenue_base(
-        nv(r.get('Mes_Rooms', 0)),
-        nv(r.get('Mes_Rev', 0)),
-        nv(r.get('Mes_AyB', 0))
-        )
+            nv(r.get('Mes_Rooms', 0)),
+            nv(r.get('Mes_Rev', 0)),
+            nv(r.get('Mes_AyB', 0))
+            )
 
         mes_adr, mes_revpar, _ = calcular_adr_revpar(
         mes_rooms,
