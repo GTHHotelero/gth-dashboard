@@ -518,7 +518,8 @@ def build_ejecutivo_data(csv_data):
         mes_house_use = int(nv(r.get('Mes_House_Use', 0)))
         mes_comply = int(nv(r.get('Mes_Complimentary', 0)))
 
-        mes_ocup = nv(r.get('Mes_Ocup_GTH', 0))
+        mes_ocup_gth = nv(r.get('Mes_Ocup_GTH', 0))
+        mes_ocup = mes_ocup_gth if mes_ocup_gth > 0 else nv(r.get('Mes_Ocup', 0))
         
         mes_rooms = rooms_revenue_base(
             nv(r.get('Mes_Rooms', 0)),
