@@ -567,46 +567,45 @@ def build_ejecutivo_data(csv_data):
                             "Mes_Rooms":nv(r['Mes_Rooms']),"Mes_AyB":nv(r['Mes_AyB'])}
 
     scatter = []
-for h in HOTELES_LIST:
-    puntos = []
-    for i, mk in enumerate(meses_ord):
-        r = by_month[mk].get(h)
+    for h in HOTELES_LIST:
+        puntos = []
+        for i, mk in enumerate(meses_ord):
+            r = by_month[mk].get(h)
 
-        if r:
-            mes_ocup, mes_adr, mes_revpar, mes_rev, mes_rooms, mes_ayb = kpis_mes_ej(r)
+            if r:
+                mes_ocup, mes_adr, mes_revpar, mes_rev, mes_rooms, mes_ayb = kpis_mes_ej(r)
 
-            if mes_ocup > 0 and mes_adr > 0:
-                puntos.append({
-                    "x": round(mes_ocup, 2),
-                    "y": round(mes_adr / 1000, 1),
-                    "mes": meses_labels[i]
-                })
+                if mes_ocup > 0 and mes_adr > 0:
+                    puntos.append({
+                        "x": round(mes_ocup, 2),
+                        "y": round(mes_adr / 1000, 1),
+                        "mes": meses_labels[i]
+                    })
 
-    scatter.append({
-        "nombre": h,
-        "color": HOTEL_INFO[h]["color"],
-        "puntos": puntos
-    })
+        scatter.append({
+            "nombre": h,
+            "color": HOTEL_INFO[h]["color"],
+            "puntos": puntos
+        })
 
     badge = meses_labels[-1] if meses_labels else "—"
     hoteles_con_datos = sum(1 for h in HOTELES_LIST if by_month[ultimo].get(h)) if ultimo else 0
     total_rev = sum(nv(by_month[ultimo].get(h,{}).get('Mes_Rev',0)) for h in HOTELES_LIST if by_month[ultimo].get(h)) if ultimo else 0
     avg_ocup = (sum(nv(by_month[ultimo].get(h,{}).get('Mes_Ocup',0)) for h in HOTELES_LIST if by_month[ultimo].get(h)) / hoteles_con_datos) if hoteles_con_datos>0 else 0
 
-        return {
-            "MESES_EJ":     json.dumps(meses_labels),
-            "SERIES_OCUP":  json.dumps(series['ocup'], ensure_ascii=False),
-            "SERIES_ADR":   json.dumps(series['adr'],  ensure_ascii=False),
-            "SERIES_RP":    json.dumps(series['rp'],   ensure_ascii=False),
-            "SERIES_REV":   json.dumps(series['rev'],  ensure_ascii=False),
-            "BENCH":        json.dumps(bench,           ensure_ascii=False),
-            "SCATTER":      json.dumps(scatter,         ensure_ascii=False),
-            "BADGE_MES":    badge,
-            "TOTAL_REV_MES":f"{round(total_rev/1e6,1)}",
-            "AVG_OCUP":     f"{round(avg_ocup,1)}",
-            "HOTELES_COUNT":str(hoteles_con_datos),
-        }
-
+    return {
+        "MESES_EJ":     json.dumps(meses_labels),
+        "SERIES_OCUP":  json.dumps(series['ocup'], ensure_ascii=False),
+        "SERIES_ADR":   json.dumps(series['adr'],  ensure_ascii=False),
+        "SERIES_RP":    json.dumps(series['rp'],   ensure_ascii=False),
+        "SERIES_REV":   json.dumps(series['rev'],  ensure_ascii=False),
+        "BENCH":        json.dumps(bench,           ensure_ascii=False),
+        "SCATTER":      json.dumps(scatter,         ensure_ascii=False),
+        "BADGE_MES":    badge,
+        "TOTAL_REV_MES":f"{round(total_rev/1e6,1)}",
+        "AVG_OCUP":     f"{round(avg_ocup,1)}",
+        "HOTELES_COUNT":str(hoteles_con_datos),
+    }
 # ── HTML builders ─────────────────────────────────────────────────────────────
 
 def replace_const(html, name, value):
