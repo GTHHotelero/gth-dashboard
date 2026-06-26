@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GTH Dashboard Generator — GitHub Actions — v7 (fixes: CSV legacy, ADR fallback, RevPAR BBA)"""
+"""GTH Dashboard Generator — GitHub Actions — v10 (fix: Benchmark/Scatter usan GTH consistente)"""
 import os, sys, json, base64, datetime, urllib.request, urllib.error, csv, io, re
 from collections import defaultdict
 
@@ -184,8 +184,7 @@ def calcular_ocup_mes_gth(hab_ocup_mes, house_use_mes, comply_mes, ocup_arion_me
 
 def rooms_revenue_base(rooms_rev, hotel_rev=0, ayb_rev=0):
     """Revenue de habitaciones base para ADR/RevPAR.
-    Prioridad: valor Rooms del PDF. Si viene 0 (caso BBA día), usa Hotel Revenue - A&B.
-    """
+    Prioridad: valor Rooms del PDF. Si viene 0 (caso BBA día), usa Hotel Revenue - A&B."""
     rooms = int(round(rooms_rev or 0))
     if rooms <= 0 and hotel_rev and ayb_rev:
         rooms = max(0, int(round(hotel_rev - ayb_rev)))
@@ -195,8 +194,7 @@ def calcular_adr_revpar(rooms_rev, hab_ocup, house_use, comply, ocup_pct):
     """Calcula KPIs consistentes para todos los hoteles/períodos:
     ADR = Venta Habitaciones / Habitaciones Ocupadas netas
     RevPAR = Ocupación GTH x ADR
-    Habitaciones Ocupadas netas = Hab_Ocup - House Use - Complimentary
-    """
+    Habitaciones Ocupadas netas = Hab_Ocup - House Use - Complimentary"""
     hab_netas = max(0, int(hab_ocup or 0) - int(house_use or 0) - int(comply or 0))
     rooms = int(round(rooms_rev or 0))
     adr = int(round(rooms / hab_netas)) if hab_netas > 0 and rooms > 0 else 0
@@ -358,8 +356,10 @@ def extraer_fila_bba(texto, hotel, fecha_display):
     mes_ocup_gth = calcular_ocup_mes_gth(hab_ocup_mes, house_use_mes, comply_mes, mes_ocup)
     if mes_ocup_gth is None: mes_ocup_gth = 0.0
     print(f"    GTH Ocup BBA Mes: ({hab_ocup_mes}-{house_use_mes}-{comply_mes})/cap.implícita = {mes_ocup_gth}% (Arion crudo: {mes_ocup}%)", flush=True)
+
     # KPIs calculados uniformemente para todos los hoteles:
-    # BBA día no siempre expone Rooms Revenue limpio; si viene 0, se deriva como Hotel Revenue - A&B.
+    # BBA día no siempre expone Rooms Revenue limpio; si viene 0, se deriva
+    # como Hotel Revenue - A&B.
     dia_rooms_calc = rooms_revenue_base(0, dia_rev, dia_ayb)
     mes_rooms_calc = rooms_revenue_base(mes_rooms, mes_rev, mes_ayb)
     dia_adr_calc, dia_rp_calc, _ = calcular_adr_revpar(dia_rooms_calc, hab_ocup, house_use, comply, ocup_gth)
@@ -397,8 +397,7 @@ Reglas: Revenue SIN IVA.
 Dia_Complimentary / Mes_Complimentary = valores de la fila "Complimentary", columnas Dia y Mes.
 Dia_Ocup_GTH = max(0, Dia_Hab_Ocup - Dia_House_Use - Dia_Complimentary) / Hab * 100.
 Mes_Ocup_GTH = max(0, Mes_Hab_Ocup - Mes_House_Use - Mes_Complimentary) / (Mes_Hab_Ocup / (Mes_Ocup%/100)) * 100.
-ADR debe validarse con: Venta de Habitaciones / Habitaciones Ocupadas netas.
-RevPAR debe validarse con: Ocupación GTH x ADR.
+Si Tarifa Promedio (ADR) de un período es 0 o no aparece, Dia_ADR/Mes_ADR = 0 (no inventar otro número).
 0 si algún dato no aparece."""
     body = {"model":"claude-haiku-4-5","max_tokens":700,"messages":[{"role":"user","content":prompt}]}
     req = urllib.request.Request(url, data=json.dumps(body).encode(), headers=headers, method="POST")
@@ -497,67 +496,58 @@ def build_ejecutivo_data(csv_data):
     for r in csv.DictReader(io.StringIO(csv_data.strip())):
         partes = r['Fecha'].split('/')
         mk = f"{partes[1]}/{partes[2]}"
-
+        # Para cada mes+hotel nos quedamos con la fila de fecha más reciente
+        # (último día disponible de ese mes), no la primera que aparece.
         actual = by_month[mk].get(r['Hotel'])
-
         if actual is None:
             by_month[mk][r['Hotel']] = r
         else:
             f_actual = tuple(map(int, actual['Fecha'].split('/')[::-1]))
             f_nueva = tuple(map(int, r['Fecha'].split('/')[::-1]))
-
             if f_nueva > f_actual:
                 by_month[mk][r['Hotel']] = r
 
     meses_ord = sorted(by_month.keys(), key=lambda m:(int(m.split('/')[1]),int(m.split('/')[0])))
     meses_labels = [f"{NOMBRES_MESES[mk.split('/')[0]]} {mk.split('/')[1]}" for mk in meses_ord]
 
-    series = {k:{h:[] for h in HOTELES_LIST} for k in ['ocup','adr','rp','rev']}
     def kpis_mes_ej(r):
+        """KPIs del mes SIEMPRE en versión GTH (ocupación/ADR/RevPAR ajustados
+        por House Use + Complimentary), consistentes en Evolución, Benchmark
+        y Ocup/ADR — antes Benchmark leía el valor crudo de Arion directo del
+        CSV y por eso no coincidía con las otras pestañas."""
         mes_hab_ocup = int(nv(r.get('Mes_Hab_Ocup', 0)))
         mes_house_use = int(nv(r.get('Mes_House_Use', 0)))
         mes_comply = int(nv(r.get('Mes_Complimentary', 0)))
 
         mes_ocup_gth = nv(r.get('Mes_Ocup_GTH', 0))
         mes_ocup = mes_ocup_gth if mes_ocup_gth > 0 else nv(r.get('Mes_Ocup', 0))
-        
+
         mes_rooms = rooms_revenue_base(
-            nv(r.get('Mes_Rooms', 0)),
-            nv(r.get('Mes_Rev', 0)),
-            nv(r.get('Mes_AyB', 0))
-            )
+            nv(r.get('Mes_Rooms', 0)), nv(r.get('Mes_Rev', 0)), nv(r.get('Mes_AyB', 0)))
 
         mes_adr, mes_revpar, _ = calcular_adr_revpar(
-        mes_rooms,
-        mes_hab_ocup,
-        mes_house_use,
-        mes_comply,
-        mes_ocup
-        )
-        
+            mes_rooms, mes_hab_ocup, mes_house_use, mes_comply, mes_ocup)
+
         if mes_adr <= 0:
             mes_adr = nv(r.get('Mes_ADR', 0))
-
         if mes_revpar <= 0:
             mes_revpar = nv(r.get('Mes_RevPAR', 0))
 
         return mes_ocup, mes_adr, mes_revpar, nv(r.get('Mes_Rev', 0)), mes_rooms, nv(r.get('Mes_AyB', 0))
+
+    series = {k:{h:[] for h in HOTELES_LIST} for k in ['ocup','adr','rp','rev']}
     for mk in meses_ord:
         for h in HOTELES_LIST:
             r = by_month[mk].get(h)
-
             if r:
                 mes_ocup, mes_adr, mes_revpar, mes_rev, mes_rooms, mes_ayb = kpis_mes_ej(r)
-
-                series['ocup'][h].append(round(mes_ocup, 2))
-                series['adr'][h].append(round(mes_adr / 1000, 1))
-                series['rp'][h].append(round(mes_revpar / 1000, 1))
-                series['rev'][h].append(round(mes_rev / 1e6, 1))
+                series['ocup'][h].append(round(mes_ocup,2))
+                series['adr'][h].append(round(mes_adr/1000,1))
+                series['rp'][h].append(round(mes_revpar/1000,1))
+                series['rev'][h].append(round(mes_rev/1e6,1))
             else:
-                series['ocup'][h].append(None)
-                series['adr'][h].append(None)
-                series['rp'][h].append(None)
-                series['rev'][h].append(None)
+                series['ocup'][h].append(None); series['adr'][h].append(None)
+                series['rp'][h].append(None); series['rev'][h].append(None)
 
     ultimo = meses_ord[-1] if meses_ord else None
     bench = {}
@@ -565,38 +555,28 @@ def build_ejecutivo_data(csv_data):
         for h in HOTELES_LIST:
             r = by_month[ultimo].get(h)
             if r:
+                mes_ocup, mes_adr, mes_revpar, mes_rev, mes_rooms, mes_ayb = kpis_mes_ej(r)
                 bench[h] = {"Hab":nv(r['Hab']),"Dia_Ocup":nv(r['Dia_Ocup']),"Dia_ADR":nv(r['Dia_ADR']),
                             "Dia_RevPAR":nv(r['Dia_RevPAR']),"Dia_Rev":nv(r['Dia_Rev']),
-                            "Mes_Ocup":nv(r['Mes_Ocup']),"Mes_ADR":nv(r['Mes_ADR']),
-                            "Mes_RevPAR":nv(r['Mes_RevPAR']),"Mes_Rev":nv(r['Mes_Rev']),
-                            "Mes_Rooms":nv(r['Mes_Rooms']),"Mes_AyB":nv(r['Mes_AyB'])}
+                            "Mes_Ocup":mes_ocup,"Mes_ADR":mes_adr,
+                            "Mes_RevPAR":mes_revpar,"Mes_Rev":mes_rev,
+                            "Mes_Rooms":mes_rooms,"Mes_AyB":mes_ayb}
 
     scatter = []
     for h in HOTELES_LIST:
         puntos = []
-        for i, mk in enumerate(meses_ord):
+        for i,mk in enumerate(meses_ord):
             r = by_month[mk].get(h)
-
             if r:
                 mes_ocup, mes_adr, mes_revpar, mes_rev, mes_rooms, mes_ayb = kpis_mes_ej(r)
-
-                if mes_ocup > 0 and mes_adr > 0:
-                    puntos.append({
-                        "x": round(mes_ocup, 2),
-                        "y": round(mes_adr / 1000, 1),
-                        "mes": meses_labels[i]
-                    })
-
-        scatter.append({
-            "nombre": h,
-            "color": HOTEL_INFO[h]["color"],
-            "puntos": puntos
-        })
+                if mes_ocup>0 and mes_adr>0:
+                    puntos.append({"x":round(mes_ocup,2),"y":round(mes_adr/1000,1),"mes":meses_labels[i]})
+        scatter.append({"nombre":h,"color":HOTEL_INFO[h]["color"],"puntos":puntos})
 
     badge = meses_labels[-1] if meses_labels else "—"
-    hoteles_con_datos = sum(1 for h in HOTELES_LIST if by_month[ultimo].get(h)) if ultimo else 0
-    total_rev = sum(nv(by_month[ultimo].get(h,{}).get('Mes_Rev',0)) for h in HOTELES_LIST if by_month[ultimo].get(h)) if ultimo else 0
-    avg_ocup = (sum(nv(by_month[ultimo].get(h,{}).get('Mes_Ocup',0)) for h in HOTELES_LIST if by_month[ultimo].get(h)) / hoteles_con_datos) if hoteles_con_datos>0 else 0
+    hoteles_con_datos = len(bench)
+    total_rev = sum(b['Mes_Rev'] for b in bench.values())
+    avg_ocup = (sum(b['Mes_Ocup'] for b in bench.values()) / hoteles_con_datos) if hoteles_con_datos>0 else 0
 
     return {
         "MESES_EJ":     json.dumps(meses_labels),
@@ -611,6 +591,7 @@ def build_ejecutivo_data(csv_data):
         "AVG_OCUP":     f"{round(avg_ocup,1)}",
         "HOTELES_COUNT":str(hoteles_con_datos),
     }
+
 # ── HTML builders ─────────────────────────────────────────────────────────────
 
 def replace_const(html, name, value):
@@ -658,7 +639,7 @@ def build_html(csv_data, logo_b64):
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    print("=== GTH Dashboard Generator v7 (fixes: CSV legacy, ADR fallback, RevPAR BBA) ===", flush=True)
+    print("=== GTH Dashboard Generator v10 (Benchmark/Scatter usan GTH) ===", flush=True)
     gh_token = os.environ.get("GH_TOKEN","")
     logo_b64 = os.environ.get("LOGO_B64","")
     sa_json  = os.environ.get("GDRIVE_SERVICE_ACCOUNT_JSON","")
