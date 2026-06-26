@@ -534,6 +534,12 @@ def build_ejecutivo_data(csv_data):
         mes_comply,
         mes_ocup
         )
+        
+        if mes_adr <= 0:
+            mes_adr = nv(r.get('Mes_ADR', 0))
+
+        if mes_revpar <= 0:
+            mes_revpar = nv(r.get('Mes_RevPAR', 0))
 
         return mes_ocup, mes_adr, mes_revpar, nv(r.get('Mes_Rev', 0)), mes_rooms, nv(r.get('Mes_AyB', 0))
     for mk in meses_ord:
