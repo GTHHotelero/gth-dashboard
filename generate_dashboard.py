@@ -272,18 +272,23 @@ def extraer_fila_normal(texto, hotel, fecha_display):
             return {'adr':0,'rp':0,'rooms':0,'ayb':0,'rev':ni(sec,-2) if len(sec)>=2 else 0}
         return {'adr':ni(sec,s_fijo),'rp':ni(sec,s_fijo+1),'rooms':ni(sec,s_fijo+rooms_off),'ayb':ni(sec,s_fijo+ayb_off),'rev':ni(sec,-2) if len(sec)>=2 else 0}
     d=get_kpis(dia); m=get_kpis(mes); aa=get_kpis(dia_aa); maa=get_kpis(mes_aa)
-    # Validación de sentido común: ADR/RevPAR/Rooms/AyB nunca pueden ser
-    # negativos en la vida real. A veces Arion genera valores corruptos en la
-    # columna "Año Anterior" del K007 (ej. Tarifa Promedio = -2,355,654) —
-    # esto es un error del reporte fuente, no del parser. Se descarta y se
-    # muestra "s/d" en vez de un número imposible.
+    # Validación de sentido común sobre los campos "Año Anterior": a veces
+    # Arion genera columnas corruptas en el K007 (valores negativos, o en
+    # algunos PDFs la palabra "Año" se corrompe en la extracción de texto y
+    # mezcla "Mes AA" con "Año A", dando ADR=$1 u Ocupación=339%). Ningún
+    # ADR real es negativo o menor a $1.000, ninguna ocupación supera 100%.
+    # Se descarta y se muestra "s/d" en vez de un número imposible.
     for k in ('adr','rp','rooms','ayb','rev'):
         if aa[k] < 0: aa[k] = 0
         if maa[k] < 0: maa[k] = 0
+    if 0 < aa['adr'] < 1000: aa['adr'] = 0
+    if 0 < maa['adr'] < 1000: maa['adr'] = 0
     dia_ocup=nf(dia,7); dia_lleg=ni(dia,9); dia_sal=ni(dia,10)
     mes_ocup=nf(mes,7); mes_lleg=ni(mes,9)
     aa_ocup=nf(dia_aa,7) if dia_aa else 0.0
     maa_ocup=nf(mes_aa,7) if mes_aa else 0.0
+    if not (0 <= aa_ocup <= 100): aa_ocup = 0.0
+    if not (0 <= maa_ocup <= 100): maa_ocup = 0.0
 
     hab_ocup, house_use, comply, hab_ocup_mes, house_use_mes, comply_mes = extraer_hab_house_normal(dia, mes)
 
