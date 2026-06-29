@@ -283,6 +283,11 @@ def extraer_fila_normal(texto, hotel, fecha_display):
         if maa[k] < 0: maa[k] = 0
     if 0 < aa['adr'] < 1000: aa['adr'] = 0
     if 0 < maa['adr'] < 1000: maa['adr'] = 0
+    if 0 < aa['rp'] < 10: aa['rp'] = 0
+    if 0 < maa['rp'] < 10: maa['rp'] = 0
+    for k in ('rooms','ayb'):
+        if 0 < aa[k] < 100000: aa[k] = 0
+        if 0 < maa[k] < 100000: maa[k] = 0
     dia_ocup=nf(dia,7); dia_lleg=ni(dia,9); dia_sal=ni(dia,10)
     mes_ocup=nf(mes,7); mes_lleg=ni(mes,9)
     aa_ocup=nf(dia_aa,7) if dia_aa else 0.0
