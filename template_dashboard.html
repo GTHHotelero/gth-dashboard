@@ -371,10 +371,12 @@ function hotelCard(d,tab,fecha){
   const rev=d[pfx+'rev'],rooms=d[pfx+'rooms'],ayb=d[pfx+'ayb'];
   const raa=d[pfx+'rev_aa']||0,rooa=d[pfx+'rooms_aa']||0,ayba=d[pfx+'ayb_aa']||0;
   const lleg=d[pfx+'lleg'],sal=d[pfx+'sal']||0;
-  const habOcup = d[pfx+'hab_ocup'] || 0;
-  const houseUse = d[pfx+'house_use'] || 0;
-  const comply = d[pfx+'comply'] || 0;
-  const huNeto = Math.max(0, habOcup - houseUse - comply);
+  const huNeto=Math.max(0,(d.d_hab_ocup||0)-(d.d_house_use||0)-(d.d_comply||0));
+  // Año Anterior: antes se mostraba siempre el de Día, incluso en la pestaña
+  // Mes (porque sólo existía un campo). Ahora hay campos separados.
+  const aaAdr  = tab==='dia' ? d.aa_adr    : d.m_aa_adr;
+  const aaOcup = tab==='dia' ? d.aa_ocup   : d.m_aa_ocup;
+  const aaRp   = tab==='dia' ? d.aa_revpar : d.m_aa_revpar;
   const excl = (tab==='dia')
     ? ((d.d_house_use||d.d_comply) ? `<div style="font-size:9px;color:var(--muted);text-align:center;padding:5px 12px;background:#FAFAFA;border-bottom:1px solid var(--border)">Excl. de ocupación: ${d.d_house_use||0} House Use · ${d.d_comply||0} Comply</div>` : '')
     : ((d.m_house_use||d.m_comply) ? `<div style="font-size:9px;color:var(--muted);text-align:center;padding:5px 12px;background:#FAFAFA;border-bottom:1px solid var(--border)">Excl. de ocupación (mes): ${d.m_house_use||0} House Use · ${d.m_comply||0} Comply</div>` : '');
@@ -387,24 +389,21 @@ function hotelCard(d,tab,fecha){
     <div class="arr-strip">
       <div class="arr-cell"><div class="arr-lbl">Llegadas</div><div class="arr-val" style="color:${color}">${lleg}</div></div>
       <div class="arr-cell"><div class="arr-lbl">Salidas</div><div class="arr-val">${sal}</div></div>
-     <div class="arr-cell">
-    <div class="arr-lbl">Hab. Ocup.</div>
-    <div class="arr-val">${huNeto}</div>
-</div>
+      ${tab==='dia'?`<div class="arr-cell"><div class="arr-lbl">Hab. Ocup.</div><div class="arr-val">${huNeto}</div></div>`:''}
       <div class="arr-cell"><div class="arr-lbl">Ocup%</div><div class="arr-val" style="color:${ocColor(oc)}">${fp(oc)}</div></div>
     </div>
     <div class="kpi-grid">
       <div class="kpi-col-head kh-dia">${tab==='dia'?'DÍA':'MES ACTUAL'}</div>
       <div class="kpi-col-head kh-aa">AÑO ANTERIOR</div>
       <div class="kpi-row-label">TARIFA PROMEDIO (ADR)</div>
-      <div class="kpi-cell left"><div class="kpi-val" style="color:${color}">${fm(adr)}</div>${chipOc(adr,d.aa_adr,'val')}</div>
-      <div class="kpi-cell"><div class="kpi-val" style="color:var(--muted)">${d.aa_adr?fm(d.aa_adr):'—'}</div></div>
+      <div class="kpi-cell left"><div class="kpi-val" style="color:${color}">${fm(adr)}</div>${chipOc(adr,aaAdr,'val')}</div>
+      <div class="kpi-cell"><div class="kpi-val" style="color:var(--muted)">${aaAdr?fm(aaAdr):'—'}</div></div>
       <div class="kpi-row-label">OCUPACIÓN</div>
-      <div class="kpi-cell left"><div class="kpi-val" style="color:${ocColor(oc)}">${fp(oc)}</div>${chipOc(oc,d.aa_ocup,'pct')}</div>
-      <div class="kpi-cell"><div class="kpi-val" style="color:var(--muted)">${d.aa_ocup?fp(d.aa_ocup):'—'}</div></div>
+      <div class="kpi-cell left"><div class="kpi-val" style="color:${ocColor(oc)}">${fp(oc)}</div>${chipOc(oc,aaOcup,'pct')}</div>
+      <div class="kpi-cell"><div class="kpi-val" style="color:var(--muted)">${aaOcup?fp(aaOcup):'—'}</div></div>
       <div class="kpi-row-label">REVPAR</div>
-      <div class="kpi-cell left"><div class="kpi-val" style="color:${color}">${fm(rp)}</div>${chipOc(rp,d.aa_revpar,'val')}</div>
-      <div class="kpi-cell"><div class="kpi-val" style="color:var(--muted)">${d.aa_revpar?fm(d.aa_revpar):'—'}</div></div>
+      <div class="kpi-cell left"><div class="kpi-val" style="color:${color}">${fm(rp)}</div>${chipOc(rp,aaRp,'val')}</div>
+      <div class="kpi-cell"><div class="kpi-val" style="color:var(--muted)">${aaRp?fm(aaRp):'—'}</div></div>
     </div>
     <div class="rev-strip">
       <div class="rev-cell"><div class="rev-lbl">Revenue</div><div class="rev-val">${fmM(rev)}</div></div>
