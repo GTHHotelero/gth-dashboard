@@ -209,6 +209,25 @@ def get_sec(texto, label, terminators):
     if not m: return []
     return re.findall(r'[\d,]+\.?\d*', m.group(1))
 
+def get_sec_clean(texto, label, terminators, expected=45):
+    """Como get_sec, pero corrige el caso en que el header de la SIGUIENTE
+    sección se corrompió en la extracción de pdfminer (ej. la palabra 'Año'
+    renderizada como 'AM-CM-1o' por un glitch de fuente del Crystal Reports).
+    Cuando eso pasa, el patrón terminador nunca matchea y la sección
+    capturada termina absorbiendo también los valores de la sección
+    siguiente, intercalados de a pares (valor_seccionA, valor_seccionB,
+    valor_seccionA, valor_seccionB, ...).
+
+    Validado con PDF real (HJ Plaza La Ribera, 2026.06.28.pdf): la sección
+    'MesAA' capturó 88 valores en vez de 45, mezclada par a par con 'AñoA'.
+    Tomando sólo las posiciones pares se recuperan los 45 valores reales de
+    Mes AA (confirmado: %Ocup=37.83, Tarifa=90.141, RevPAR=34.102 — coincide
+    exacto con el reporte real)."""
+    vals = get_sec(texto, label, terminators)
+    if len(vals) > expected * 1.5:
+        return vals[0::2]
+    return vals
+
 def ni(lst,idx):
     try: return int(float(str(lst[idx]).replace(',','')))
     except: return 0
@@ -259,10 +278,10 @@ def extraer_fila_normal(texto, hotel, fecha_display):
     NEXT_MES   = r'Año\b|DiaAA\b|MesAA\b|Dia AA|Mes AA|Habitaciones'
     NEXT_DIAAA = r'MesAA\b|Mes AA|AñoA\b|Año A|Habitaciones'
     NEXT_MESAA = r'AñoA\b|Año A|Habitaciones'
-    dia    = get_sec(texto,'Dia',   NEXT_DIA)
-    mes    = get_sec(texto,'Mes',   NEXT_MES)
-    dia_aa = get_sec(texto,'DiaAA', NEXT_DIAAA) or get_sec(texto,'Dia AA',NEXT_DIAAA)
-    mes_aa = get_sec(texto,'MesAA', NEXT_MESAA) or get_sec(texto,'Mes AA',NEXT_MESAA)
+    dia    = get_sec_clean(texto,'Dia',   NEXT_DIA)
+    mes    = get_sec_clean(texto,'Mes',   NEXT_MES)
+    dia_aa = get_sec_clean(texto,'DiaAA', NEXT_DIAAA) or get_sec_clean(texto,'Dia AA',NEXT_DIAAA)
+    mes_aa = get_sec_clean(texto,'MesAA', NEXT_MESAA) or get_sec_clean(texto,'Mes AA',NEXT_MESAA)
     tiene_tot_hab = 'TOTAL REVENUE / HAB' in texto.upper()
     rooms_off = 4 if tiene_tot_hab else 3
     ayb_off   = 5 if tiene_tot_hab else 4
@@ -334,7 +353,7 @@ def extraer_fila_bba(texto, hotel, fecha_display):
         m = re.search(r'([\d,\.]+)\n'+re.escape(label), texto)
         return float(m.group(1).replace(',','')) if m else 0.0
     NEXT_MES = r'Año\b|DiaAA\b|MesAA\b|AñoA\b|Habitaciones'
-    mes_sec = get_sec(texto,'Mes',NEXT_MES)
+    mes_sec = get_sec_clean(texto,'Mes',NEXT_MES)
     dia_ocup=vbl('Porcentaje de Ocupación'); dia_lleg=int(vbl('Cantidad de Llegadas'))
     dia_sal=int(vbl('Cantidad de Salidas')); dia_adr=int(vbl('Tarifa Promedio'))
     dia_ayb_m=re.search(r'([\d,]+)\nAA[&\\]+BB',texto)
