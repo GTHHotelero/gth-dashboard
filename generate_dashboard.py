@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GTH Dashboard Generator — GitHub Actions — v10 (fix: Benchmark/Scatter usan GTH consistente)"""
+"""GTH Dashboard Generator — GitHub Actions — v11 (fix: AA negativo/corrupto del PDF se descarta)"""
 import os, sys, json, base64, datetime, urllib.request, urllib.error, csv, io, re
 from collections import defaultdict
 
@@ -30,7 +30,8 @@ CSV_HEADER = (
     "Mes_Rev_AA,Mes_Rooms_AA,Mes_AyB_AA,"
     "AA_Ocup,AA_ADR,AA_RevPAR,"
     "Dia_Hab_Ocup,Dia_House_Use,Dia_Complimentary,Dia_Ocup_GTH,"
-    "Mes_Hab_Ocup,Mes_House_Use,Mes_Complimentary,Mes_Ocup_GTH"
+    "Mes_Hab_Ocup,Mes_House_Use,Mes_Complimentary,Mes_Ocup_GTH,"
+    "Mes_AA_Ocup,Mes_AA_ADR,Mes_AA_RevPAR"
 )
 
 # ── GitHub ────────────────────────────────────────────────────────────────────
@@ -271,9 +272,18 @@ def extraer_fila_normal(texto, hotel, fecha_display):
             return {'adr':0,'rp':0,'rooms':0,'ayb':0,'rev':ni(sec,-2) if len(sec)>=2 else 0}
         return {'adr':ni(sec,s_fijo),'rp':ni(sec,s_fijo+1),'rooms':ni(sec,s_fijo+rooms_off),'ayb':ni(sec,s_fijo+ayb_off),'rev':ni(sec,-2) if len(sec)>=2 else 0}
     d=get_kpis(dia); m=get_kpis(mes); aa=get_kpis(dia_aa); maa=get_kpis(mes_aa)
+    # Validación de sentido común: ADR/RevPAR/Rooms/AyB nunca pueden ser
+    # negativos en la vida real. A veces Arion genera valores corruptos en la
+    # columna "Año Anterior" del K007 (ej. Tarifa Promedio = -2,355,654) —
+    # esto es un error del reporte fuente, no del parser. Se descarta y se
+    # muestra "s/d" en vez de un número imposible.
+    for k in ('adr','rp','rooms','ayb','rev'):
+        if aa[k] < 0: aa[k] = 0
+        if maa[k] < 0: maa[k] = 0
     dia_ocup=nf(dia,7); dia_lleg=ni(dia,9); dia_sal=ni(dia,10)
     mes_ocup=nf(mes,7); mes_lleg=ni(mes,9)
     aa_ocup=nf(dia_aa,7) if dia_aa else 0.0
+    maa_ocup=nf(mes_aa,7) if mes_aa else 0.0
 
     hab_ocup, house_use, comply, hab_ocup_mes, house_use_mes, comply_mes = extraer_hab_house_normal(dia, mes)
 
@@ -302,7 +312,8 @@ def extraer_fila_normal(texto, hotel, fecha_display):
             f"{maa['rev']},{maa['rooms']},{maa['ayb']},"
             f"{aa_ocup},{aa['adr']},{aa['rp']},"
             f"{hab_ocup},{house_use},{comply},{ocup_gth},"
-            f"{hab_ocup_mes},{house_use_mes},{comply_mes},{mes_ocup_gth}")
+            f"{hab_ocup_mes},{house_use_mes},{comply_mes},{mes_ocup_gth},"
+            f"{maa_ocup},{maa['adr']},{maa['rp']}")
 
 def extraer_fila_bba(texto, hotel, fecha_display):
     info = HOTEL_INFO[hotel]
@@ -375,7 +386,8 @@ def extraer_fila_bba(texto, hotel, fecha_display):
             f"0,0,0,"
             f"0.0,0,0,"
             f"{hab_ocup},{house_use},{comply},{ocup_gth},"
-            f"{hab_ocup_mes},{house_use_mes},{comply_mes},{mes_ocup_gth}")
+            f"{hab_ocup_mes},{house_use_mes},{comply_mes},{mes_ocup_gth},"
+            f"0.0,0,0")
 
 def extraer_fila_k007(texto, hotel, fecha_display):
     if hotel == "HJ Bahia Blanca" or es_formato_bba(texto):
@@ -415,25 +427,31 @@ Si Tarifa Promedio (ADR) de un período es 0 o no aparece, Dia_ADR/Mes_ADR = 0 (
 # ── CSV helpers ───────────────────────────────────────────────────────────────
 
 def normalizar_csv(csv_data):
-    """Migra filas viejas al formato actual de 37 columnas.
+    """Migra filas viejas al formato actual de 40 columnas.
 
     Dia_Complimentary va INSERTADO entre Dia_House_Use y Dia_Ocup_GTH — si se
     agregara al final en vez de insertarse ahí, el valor real de Dia_Ocup_GTH
     se leería con el nombre 'Dia_Complimentary' y la columna Dia_Ocup_GTH
-    quedaría en cero (bug ya corregido en v6)."""
+    quedaría en cero (bug corregido en v6).
+
+    Mes_AA_Ocup/Mes_AA_ADR/Mes_AA_RevPAR son 3 campos nuevos (v12): antes no
+    existía un "Año Anterior" separado para la pestaña Mes — el HTML mostraba
+    el mismo valor de Día Año Anterior en ambas pestañas, sin diferenciar."""
     lineas = csv_data.strip().split('\n')
-    if 'Mes_Ocup_GTH' in lineas[0]:
+    if 'Mes_AA_RevPAR' in lineas[0]:
         return csv_data
-    n_nuevo = len(CSV_HEADER.split(','))  # 37
+    n_nuevo = len(CSV_HEADER.split(','))  # 40
     nuevas = [CSV_HEADER]
     for linea in lineas[1:]:
         if not linea.strip(): continue
         campos = linea.split(',')
         n = len(campos)
         if n == 32:
-            campos = campos[:31] + ['0'] + [campos[31]] + ['0','0','0','0']
+            campos = campos[:31] + ['0'] + [campos[31]] + ['0','0','0','0','0.0','0','0']
         elif n == 33:
-            campos = campos + ['0','0','0','0']
+            campos = campos + ['0','0','0','0','0.0','0','0']
+        elif n == 37:
+            campos = campos + ['0.0','0','0']
         elif n < n_nuevo:
             while len(campos) < n_nuevo:
                 campos.append('0')
@@ -479,6 +497,7 @@ def build_dashboard_data(csv_data):
             "m_rooms":nv(r['Mes_Rooms']),"m_ayb":nv(r['Mes_AyB']),
             "m_rev_aa":nv(r['Mes_Rev_AA']),"m_rooms_aa":nv(r['Mes_Rooms_AA']),"m_ayb_aa":nv(r['Mes_AyB_AA']),
             "aa_ocup":nv(r['AA_Ocup']),"aa_adr":nv(r['AA_ADR']),"aa_revpar":nv(r['AA_RevPAR']),
+            "m_aa_ocup":nv(r.get('Mes_AA_Ocup',0)),"m_aa_adr":nv(r.get('Mes_AA_ADR',0)),"m_aa_revpar":nv(r.get('Mes_AA_RevPAR',0)),
             "sin_k007": nv(r['Dia_Ocup'])==0 and nv(r['Dia_Rev'])==0 and nv(r['Mes_Rev'])>0
         }
     fechas = sorted(by_date.keys(), key=lambda d:[int(x) for x in d.split('/')[::-1]], reverse=True)
